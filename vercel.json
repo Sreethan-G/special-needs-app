@@ -3,11 +3,13 @@
       {
         "src": "special-needs/package.json",
         "use": "@vercel/static-build",
-        "config": { "distDir": "special-needs/dist" }
+        "config": {
+          "distDir": "special-needs/dist"
+        }
       }
     ],
     "routes": [
-      { "src": "/(.*)", "dest": "/index.html" }
+      { "src": "/(.*)", "dest": "/special-needs/dist/$1" }
     ]
   }
   
