@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     width: "100%",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   label: {
     fontSize: 16,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignSelf: "stretch",
     alignItems: "center",
-    marginBottom: 25,
+    marginBottom: 20,
   },
   logOutBtn: {
     backgroundColor: "#D32F2F",
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignSelf: "stretch",
     alignItems: "center",
-    marginBottom: 25,
+    marginBottom: 20,
   },
   contactBtn: {
     backgroundColor: "#8595FF",

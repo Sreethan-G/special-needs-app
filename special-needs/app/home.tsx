@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
   gearIconButton: {
     position: "absolute",
     top: 10,
-    right: 20,
+    right: 15,
     zIndex: 1000,
     padding: 5,
     borderRadius: 20,
