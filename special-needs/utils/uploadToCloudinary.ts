@@ -11,7 +11,7 @@ const getMimeType = (uri: string) => {
     case "gif":
       return "image/gif";
     case "heic":
-      return "image/heic";
+      return "image/heic";      
     case "avif":
       return "image/avif";
     default:

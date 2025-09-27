@@ -28,7 +28,7 @@ export default function Index() {
     resourceId: string,
     image: string,
     title: string,
-    location: string,
+    location: Resource["location"], // use the correct type
     contact: string,
     type: string,
     languages?: string,
@@ -41,7 +41,7 @@ export default function Index() {
         resourceId,
         image,
         title,
-        location,
+        location: JSON.stringify(location), // stringify here
         contact,
         type,
         languages,
@@ -54,7 +54,13 @@ export default function Index() {
   const [modalVisible, setModalVisible] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    location: "",
+    location: {
+      address: "",
+      city: "",
+      state: "",
+      lat: "",
+      lon: "",
+    },
     contact: "",
     languages: "",
     website: "",
@@ -98,8 +104,29 @@ export default function Index() {
 
   const [selectedType, setSelectedType] = useState("All");
 
-  const handleChange = (key: keyof typeof formData, value: string) => {
-    setFormData({ ...formData, [key]: value });
+  const handleChange = (
+    key: keyof typeof formData,
+    value: string,
+    subKey?: keyof typeof formData.location
+  ) => {
+    if (key === "location") {
+      if (!subKey) {
+        console.warn("Missing subKey for location update");
+        return;
+      }
+      setFormData({
+        ...formData,
+        location: {
+          ...formData.location,
+          [subKey]: value,
+        },
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [key]: value,
+      });
+    }
   };
 
   const handleSubmit = async () => {
@@ -128,7 +155,13 @@ export default function Index() {
       setModalVisible(false);
       setFormData({
         name: "",
-        location: "",
+        location: {
+          address: "",
+          city: "",
+          state: "",
+          lat: "",
+          lon: "",
+        },
         contact: "",
         languages: "",
         website: "",
@@ -147,7 +180,16 @@ export default function Index() {
     const newErrors: { [key: string]: string } = {};
 
     if (!formData.name.trim()) newErrors.name = "Name is required";
-    if (!formData.location.trim()) newErrors.location = "Address is required";
+    if (!formData.location.address.trim()) {
+      newErrors.address = "Address is required";
+    }
+    if (!formData.location.city.trim()) {
+      newErrors.city = "City is required";
+    }
+    if (!formData.location.state.trim()) {
+      newErrors.state = "State is required";
+    }
+
     if (!formData.contact.trim()) newErrors.contact = "Contact is required";
     if (!formData.image.trim()) newErrors.image = "Image URL is required";
     if (!formData.type.trim()) newErrors.type = "Type is required";
@@ -277,7 +319,7 @@ export default function Index() {
                     height: 200,
                   }}
                   title={resource.name}
-                  location={resource.location}
+                  location={`${resource.location.address}, ${resource.location.city}, ${resource.location.state}`}
                   contact={resource.contact}
                   style={styles.card}
                   isFavorite={true}
@@ -312,7 +354,7 @@ export default function Index() {
                 height: 200,
               }}
               title={resource.name}
-              location={resource.location}
+              location={`${resource.location.address}, ${resource.location.city}, ${resource.location.state}`}
               contact={resource.contact}
               style={styles.card}
               isFavorite={favoriteIds.includes(resource._id)}
@@ -371,13 +413,40 @@ export default function Index() {
                 )}
                 <Text style={styles.modalText}>Address*</Text>
                 <TextInput
-                  style={[styles.input, errors.location && styles.inputError]}
-                  value={formData.location}
-                  onChangeText={(text) => handleChange("location", text)}
+                  style={[styles.input, errors.address && styles.inputError]}
+                  value={formData.location.address}
+                  onChangeText={(text) =>
+                    handleChange("location", text, "address")
+                  }
                 />
-                {errors.location && (
-                  <Text style={styles.errorText}>{errors.location}</Text>
+                {errors.address && (
+                  <Text style={styles.errorText}>{errors.address}</Text>
                 )}
+
+                <Text style={styles.modalText}>City*</Text>
+                <TextInput
+                  style={[styles.input, errors.city && styles.inputError]}
+                  value={formData.location.city}
+                  onChangeText={(text) =>
+                    handleChange("location", text, "city")
+                  }
+                />
+                {errors.city && (
+                  <Text style={styles.errorText}>{errors.city}</Text>
+                )}
+
+                <Text style={styles.modalText}>State*</Text>
+                <TextInput
+                  style={[styles.input, errors.state && styles.inputError]}
+                  value={formData.location.state}
+                  onChangeText={(text) =>
+                    handleChange("location", text, "state")
+                  }
+                />
+                {errors.state && (
+                  <Text style={styles.errorText}>{errors.state}</Text>
+                )}
+
                 <Text style={styles.modalText}>Contact*</Text>
                 <TextInput
                   style={[styles.input, errors.contact && styles.inputError]}
@@ -462,6 +531,15 @@ export default function Index() {
         <Image
           source={require("@/assets/images/gear-icon.png")}
           style={styles.gearIcon}
+        />
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => router.push({ pathname: "/contact-us" })}
+        style={styles.callIconButton}
+      >
+        <Image
+          source={require("@/assets/images/call-icon.png")}
+          style={styles.callIcon}
         />
       </TouchableOpacity>
     </View>
@@ -571,7 +649,7 @@ const styles = StyleSheet.create({
   gearIconButton: {
     position: "absolute",
     top: 10,
-    right: 15,
+    right: 20,
     zIndex: 1000,
     padding: 5,
     borderRadius: 20,
@@ -580,5 +658,32 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     resizeMode: "contain",
+  },
+  callIconButton: {
+    position: "absolute",
+    top: 10,
+    right: 75,
+    zIndex: 1000,
+    padding: 5,
+    borderRadius: 20,
+  },
+  callIcon: {
+    width: 40,
+    height: 40,
+    resizeMode: "contain",
+  },
+  locContainer: {
+    flexDirection: "column",
+    width: "100%",
+  },
+  locationBtn: {
+    padding: 10,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    borderColor: "#ccc",
+    borderWidth: 1,
+  },
+  locationText: {
+    fontSize: 14,
   },
 });

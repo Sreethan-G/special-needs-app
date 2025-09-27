@@ -11,6 +11,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { launchImageLibrary } from "react-native-image-picker";
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
@@ -22,6 +23,14 @@ export default function Settings() {
   const [password, setPassword] = useState("");
   const { userId } = useAuth();
   const { logout } = useAuth();
+
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const [location, setLocation] = useState({
+    address: "",
+    city: "",
+    state: "",
+  });
 
   const [isSaving, setIsSaving] = useState(false);
   const [savedMessageVisible, setSavedMessageVisible] = useState(false);
@@ -52,27 +61,34 @@ export default function Settings() {
     }
   };
 
+  // ------------------ FETCH USER ------------------
   useEffect(() => {
+    if (!userId) return;
+
     const fetchUser = async () => {
       try {
-        const response = await axios.get(
+        const { data: user } = await axios.get(
           `http://localhost:3001/api/users/${userId}`
         );
-        const user = response.data;
-        setUsername(user.username);
-        setEmail(user.email);
+
+        setUsername(user.username || "");
+        setEmail(user.email || "");
         setProfilePic(user.profilePicUrl || null);
-      } catch (error) {
-        console.error("Failed to load user data:", error);
+        setLocation({
+          address: user.location?.address || "",
+          city: user.location?.city || "",
+          state: user.location?.state || "",
+        });
+      } catch (err) {
+        console.error("Failed to load user data:", err);
       }
     };
 
-    if (userId) {
-      fetchUser();
-    }
+    fetchUser();
   }, [userId]);
 
-  const handleSave = async () => {
+  // ------------------ GENERIC UPDATE ------------------
+  const updateUser = async (updateData: any, closeModal = false) => {
     if (!userId) {
       alert("User not logged in");
       return;
@@ -80,34 +96,47 @@ export default function Settings() {
 
     setIsSaving(true);
     try {
-      const updateData = {
-        username,
-        email,
-        password,
-        profilePicUrl: profilePic, // make sure this is a URL (Cloudinary, etc.)
-      };
-
-      console.log("Saving to:", `http://localhost:3001/api/users/${userId}`);
-
-      const response = await axios.patch(
+      const { data } = await axios.patch(
         `http://localhost:3001/api/users/${userId}`,
         updateData
       );
+      const updatedUser = data.user;
 
-      console.log("Updated user:", response.data);
+      if (updatedUser) {
+        setUsername(updatedUser.username || "");
+        setEmail(updatedUser.email || "");
+        setProfilePic(updatedUser.profilePicUrl || null);
+        setLocation({
+          address: updatedUser.location?.address || "",
+          city: updatedUser.location?.city || "",
+          state: updatedUser.location?.state || "",
+        });
+      }
 
       setIsSaving(false);
       setSavedMessageVisible(true);
+      if (closeModal) setModalVisible(false);
 
-      setTimeout(() => {
-        setSavedMessageVisible(false);
-      }, 1500);
-    } catch (error) {
+      setTimeout(() => setSavedMessageVisible(false), 1500);
+    } catch (err) {
       setIsSaving(false);
-      console.error("Failed to update user:", error);
+      console.error("Failed to update user:", err);
       alert("Failed to save changes.");
     }
   };
+
+  // ------------------ SAVE LOCATION ONLY ------------------
+  const handleSaveLocation = () => updateUser({ location }, true);
+
+  // ------------------ SAVE ENTIRE USER ------------------
+  const handleSave = () =>
+    updateUser({
+      username,
+      email,
+      password,
+      profilePicUrl: profilePic,
+      location,
+    });
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -153,6 +182,22 @@ export default function Settings() {
         />
       </View>
 
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Location</Text>
+        <View style={styles.locContainer}>
+          <TouchableOpacity
+            style={styles.locationBtn}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.locationText}>
+              {location?.address || location?.city || location?.state
+                ? `${location.address}, ${location.city}, ${location.state}`
+                : "Click to select location"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <TouchableOpacity
         style={styles.saveButton}
         onPress={handleSave}
@@ -177,12 +222,60 @@ export default function Settings() {
         <Text style={styles.saveButtonText}>LOG OUT</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.contactBtn}
         onPress={() => router.push({ pathname: "/contact-us" })}
       >
         <Text style={styles.saveButtonText}>CONTACT US</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
+
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Location</Text>
+
+            <Text style={styles.label}>Address</Text>
+            <TextInput
+              style={styles.inputModal}
+              value={location.address}
+              onChangeText={(text) =>
+                setLocation({ ...location, address: text })
+              }
+            />
+            <Text style={styles.label}>City</Text>
+            <TextInput
+              style={styles.inputModal}
+              value={location.city}
+              onChangeText={(text) => setLocation({ ...location, city: text })}
+            />
+            <Text style={styles.label}>State</Text>
+            <TextInput
+              style={styles.inputModal}
+              value={location.state}
+              onChangeText={(text) => setLocation({ ...location, state: text })}
+            />
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleSaveLocation} // saves location to DB
+                disabled={isSaving}
+              >
+                <Text style={styles.buttonText}>SUBMIT</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.buttonText}>CANCEL</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -245,6 +338,7 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
     alignItems: "center",
     marginBottom: 20,
+    marginTop: 5,
   },
   logOutBtn: {
     backgroundColor: "#D32F2F",
@@ -267,5 +361,73 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  locContainer: {
+    flexDirection: "column",
+    width: "100%",
+  },
+  locationBtn: {
+    padding: 10,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    borderColor: "#ccc",
+    borderWidth: 1,
+  },
+  locationText: {
+    fontSize: 14,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "90%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    alignItems: "stretch",
+  },
+  modalTitle: {
+    fontSize: 25,
+    fontWeight: "bold",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  submitButton: {
+    backgroundColor: "#388E3C",
+    paddingVertical: 10,
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 5,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#D32F2F",
+    paddingVertical: 10,
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 5,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  inputModal: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: "#fff",
+    fontSize: 14,
+    marginBottom: 15,
   },
 });

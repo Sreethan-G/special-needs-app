@@ -11,13 +11,8 @@ import {
 
 export default function ForgotPassword() {
   const [emailAddress, setEmailAddress] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
   const [emailError, setEmailError] = useState("");
-  const [newPasswordError, setNewPasswordError] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,65 +21,37 @@ export default function ForgotPassword() {
 
   const handleSubmit = async () => {
     setEmailError("");
-    setNewPasswordError("");
-    setConfirmPasswordError("");
-
-    let hasError = false;
 
     if (!emailAddress) {
       setEmailError("Email is required");
-      hasError = true;
+      return;
     } else if (!validateEmail(emailAddress)) {
       setEmailError("Invalid email format");
-      hasError = true;
+      return;
     }
-
-    if (!newPassword) {
-      setNewPasswordError("New password is required");
-      hasError = true;
-    }
-
-    if (!confirmPassword) {
-      setConfirmPasswordError("Please confirm your new password");
-      hasError = true;
-    } else if (newPassword && confirmPassword !== newPassword) {
-      setConfirmPasswordError("Passwords do not match");
-      hasError = true;
-    }
-
-    if (hasError) return;
 
     setLoading(true);
 
     try {
       const response = await fetch(
-        "http://localhost:3001/api/users/reset-password",
+        "http://localhost:3001/api/users/forgot-password",
         {
-          method: "PATCH",
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: emailAddress,
-            newPassword: newPassword,
-          }),
+          body: JSON.stringify({ email: emailAddress }),
         }
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.error?.includes("email")) {
-          setEmailError(data.error);
-        } else {
-          // generic fallback error
-          setEmailError("Failed to reset password");
-        }
+        setEmailError(data.error || "Failed to send reset code");
       } else {
-        // Success - clear fields
-        setEmailAddress("");
-        setNewPassword("");
-        setConfirmPassword("");
-        // Optionally: show success message or redirect
-        router.push("/login");
+        // success → move to reset-password screen, pass email along
+        router.push({
+          pathname: "/reset-password",
+          params: { email: emailAddress },
+        });
       }
     } catch (error) {
       setEmailError("Network error. Please try again.");
@@ -95,7 +62,7 @@ export default function ForgotPassword() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Change Password</Text>
+      <Text style={styles.title}>Forgot Password</Text>
 
       <TextInput
         style={[styles.input, emailError ? styles.errorInput : null]}
@@ -112,53 +79,24 @@ export default function ForgotPassword() {
       {emailError.trim() !== "" && (
         <Text style={styles.errorText}>{emailError}</Text>
       )}
+      <View style={styles.buttonRow}>
+        <TouchableOpacity
+          style={[styles.primaryButton, loading && styles.disabledButton]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.primaryButtonText}>
+            {loading ? "Sending..." : "Send Reset Code"}
+          </Text>
+        </TouchableOpacity>
 
-      <TextInput
-        style={[styles.input, newPasswordError ? styles.errorInput : null]}
-        placeholder="New Password"
-        secureTextEntry
-        value={newPassword}
-        onChangeText={(text) => {
-          setNewPassword(text);
-          setNewPasswordError("");
-        }}
-        placeholderTextColor="#888"
-      />
-      {newPasswordError.trim() !== "" && (
-        <Text style={styles.errorText}>{newPasswordError}</Text>
-      )}
-
-      <TextInput
-        style={[styles.input, confirmPasswordError ? styles.errorInput : null]}
-        placeholder="Confirm New Password"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={(text) => {
-          setConfirmPassword(text);
-          setConfirmPasswordError("");
-        }}
-        placeholderTextColor="#888"
-      />
-      {confirmPasswordError.trim() !== "" && (
-        <Text style={styles.errorText}>{confirmPasswordError}</Text>
-      )}
-
-      <TouchableOpacity
-        style={[styles.primaryButton, loading && styles.disabledButton]}
-        onPress={handleSubmit}
-        disabled={loading}
-      >
-        <Text style={styles.primaryButtonText}>
-          {loading ? "Updating..." : "Submit"}
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.secondaryBtn}
-        onPress={() => router.push("/login")}
-      >
-        <Text style={styles.primaryButtonText}>Back To Login</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.secondaryBtn}
+          onPress={() => router.push("/login")}
+        >
+          <Text style={styles.primaryButtonText}>Back To Login</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -172,7 +110,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-    fontSize: 48,
+    fontSize: 42,
     fontWeight: "bold",
     color: "#004d00",
     marginBottom: 20,
@@ -197,27 +135,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   primaryButton: {
-    width: "65%",
+    flex: 1,
     backgroundColor: "#66bb6a",
     padding: 10,
     borderRadius: 8,
+    marginRight: 10,
     alignItems: "center",
-    marginVertical: 10,
   },
   disabledButton: {
     backgroundColor: "#8bc34a",
   },
   secondaryBtn: {
-    width: "65%",
+    flex: 1,
     backgroundColor: "#388e3c",
     padding: 10,
     borderRadius: 8,
+    marginLeft: 10,
     alignItems: "center",
-    marginVertical: 10,
   },
   primaryButtonText: {
     color: "white",
     fontWeight: "bold",
     fontSize: 18,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    width: "65%",
+    marginBottom: 15,
   },
 });

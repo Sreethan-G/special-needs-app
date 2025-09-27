@@ -14,12 +14,13 @@ import Review from "@/components/Review";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReviewType } from "@/components/types/ReviewType";
+import { Resource } from "@/components/types/Resource";
 
 export default function Info() {
   const {
     resourceId,
     title,
-    location,
+    location: locationParam,
     contact,
     image,
     type,
@@ -27,6 +28,24 @@ export default function Info() {
     website,
     notes,
   } = useLocalSearchParams();
+
+  let locationObj: Resource["location"] = {
+    address: "",
+    city: "",
+    state: "",
+    lat: null,
+    lng: null,
+  };
+
+  try {
+    locationObj =
+      typeof locationParam === "string"
+        ? JSON.parse(locationParam)
+        : locationParam;
+  } catch (err) {
+    console.warn("Failed to parse location param:", err);
+  }
+
   const [modalVisible, setModalVisible] = useState(false);
   const [formData, setFormData] = useState({
     review: "",
@@ -152,7 +171,11 @@ export default function Info() {
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Address</Text>
-            <Text style={styles.value}>{location}</Text>
+            <Text style={styles.value}>
+              {locationObj.address || locationObj.city || locationObj.state
+                ? `${locationObj.address}, ${locationObj.city}, ${locationObj.state}`
+                : "No location provided"}
+            </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Contact</Text>
