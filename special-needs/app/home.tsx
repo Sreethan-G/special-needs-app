@@ -28,7 +28,7 @@ export default function Index() {
     resourceId: string,
     image: string,
     title: string,
-    location: Resource["location"], // use the correct type
+    location: Resource["location"],
     contact: string,
     type: string,
     languages?: string,
@@ -41,7 +41,7 @@ export default function Index() {
         resourceId,
         image,
         title,
-        location: JSON.stringify(location), // stringify here
+        location: JSON.stringify(location),
         contact,
         type,
         languages,
@@ -102,6 +102,59 @@ export default function Index() {
     { label: "Miscellaneous", value: "Miscellaneous" },
   ];
 
+  const usStates = [
+    { label: "Alabama", value: "AL" },
+    { label: "Alaska", value: "AK" },
+    { label: "Arizona", value: "AZ" },
+    { label: "Arkansas", value: "AR" },
+    { label: "California", value: "CA" },
+    { label: "Colorado", value: "CO" },
+    { label: "Connecticut", value: "CT" },
+    { label: "Delaware", value: "DE" },
+    { label: "Florida", value: "FL" },
+    { label: "Georgia", value: "GA" },
+    { label: "Hawaii", value: "HI" },
+    { label: "Idaho", value: "ID" },
+    { label: "Illinois", value: "IL" },
+    { label: "Indiana", value: "IN" },
+    { label: "Iowa", value: "IA" },
+    { label: "Kansas", value: "KS" },
+    { label: "Kentucky", value: "KY" },
+    { label: "Louisiana", value: "LA" },
+    { label: "Maine", value: "ME" },
+    { label: "Maryland", value: "MD" },
+    { label: "Massachusetts", value: "MA" },
+    { label: "Michigan", value: "MI" },
+    { label: "Minnesota", value: "MN" },
+    { label: "Mississippi", value: "MS" },
+    { label: "Missouri", value: "MO" },
+    { label: "Montana", value: "MT" },
+    { label: "Nebraska", value: "NE" },
+    { label: "Nevada", value: "NV" },
+    { label: "New Hampshire", value: "NH" },
+    { label: "New Jersey", value: "NJ" },
+    { label: "New Mexico", value: "NM" },
+    { label: "New York", value: "NY" },
+    { label: "North Carolina", value: "NC" },
+    { label: "North Dakota", value: "ND" },
+    { label: "Ohio", value: "OH" },
+    { label: "Oklahoma", value: "OK" },
+    { label: "Oregon", value: "OR" },
+    { label: "Pennsylvania", value: "PA" },
+    { label: "Rhode Island", value: "RI" },
+    { label: "South Carolina", value: "SC" },
+    { label: "South Dakota", value: "SD" },
+    { label: "Tennessee", value: "TN" },
+    { label: "Texas", value: "TX" },
+    { label: "Utah", value: "UT" },
+    { label: "Vermont", value: "VT" },
+    { label: "Virginia", value: "VA" },
+    { label: "Washington", value: "WA" },
+    { label: "West Virginia", value: "WV" },
+    { label: "Wisconsin", value: "WI" },
+    { label: "Wyoming", value: "WY" },
+  ];
+
   const [selectedType, setSelectedType] = useState("All");
 
   const handleChange = (
@@ -133,7 +186,6 @@ export default function Index() {
     if (!validateForm()) return;
 
     try {
-      // First upload image to Cloudinary
       const uploadedImageUrl = await uploadToCloudinary(formData.image);
 
       if (!uploadedImageUrl) {
@@ -144,13 +196,11 @@ export default function Index() {
         return;
       }
 
-      // Replace local URI with cloud URL
       const finalFormData = {
         ...formData,
         image: uploadedImageUrl,
       };
 
-      // Then submit form with Cloudinary URL
       await axios.post("http://localhost:3001/api/resources", finalFormData);
       setModalVisible(false);
       setFormData({
@@ -222,7 +272,7 @@ export default function Index() {
           );
           setFavoriteIds(favoritesRes.data);
         } else {
-          setFavoriteIds([]); // no user, no favorites
+          setFavoriteIds([]);
         }
       } catch (error) {
         console.error("Failed to fetch resources or favorites:", error);
@@ -247,7 +297,6 @@ export default function Index() {
       const url = `http://localhost:3001/api/users/${userId}/favorites`;
       console.log("PATCH URL:", url);
 
-      // Call backend to toggle favorite for user
       const response = await axios.patch(
         `http://localhost:3001/api/users/${userId}/favorites`,
         {
@@ -436,11 +485,11 @@ export default function Index() {
                 )}
 
                 <Text style={styles.modalText}>State*</Text>
-                <TextInput
-                  style={[styles.input, errors.state && styles.inputError]}
-                  value={formData.location.state}
-                  onChangeText={(text) =>
-                    handleChange("location", text, "state")
+                <Dropdown
+                  options={usStates}
+                  placeholder="Select a state"
+                  onSelect={(option) =>
+                    handleChange("location", String(option.value), "state")
                   }
                 />
                 {errors.state && (

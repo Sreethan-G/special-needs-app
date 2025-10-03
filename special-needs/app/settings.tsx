@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { launchImageLibrary } from "react-native-image-picker";
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
+import Dropdown from "@/components/Dropdown";
 
 export default function Settings() {
   const [profilePic, setProfilePic] = useState<string | null>(null);
@@ -24,7 +25,63 @@ export default function Settings() {
   const { userId } = useAuth();
   const { logout } = useAuth();
 
+  const usStates = [
+    { label: "Alabama", value: "AL" },
+    { label: "Alaska", value: "AK" },
+    { label: "Arizona", value: "AZ" },
+    { label: "Arkansas", value: "AR" },
+    { label: "California", value: "CA" },
+    { label: "Colorado", value: "CO" },
+    { label: "Connecticut", value: "CT" },
+    { label: "Delaware", value: "DE" },
+    { label: "Florida", value: "FL" },
+    { label: "Georgia", value: "GA" },
+    { label: "Hawaii", value: "HI" },
+    { label: "Idaho", value: "ID" },
+    { label: "Illinois", value: "IL" },
+    { label: "Indiana", value: "IN" },
+    { label: "Iowa", value: "IA" },
+    { label: "Kansas", value: "KS" },
+    { label: "Kentucky", value: "KY" },
+    { label: "Louisiana", value: "LA" },
+    { label: "Maine", value: "ME" },
+    { label: "Maryland", value: "MD" },
+    { label: "Massachusetts", value: "MA" },
+    { label: "Michigan", value: "MI" },
+    { label: "Minnesota", value: "MN" },
+    { label: "Mississippi", value: "MS" },
+    { label: "Missouri", value: "MO" },
+    { label: "Montana", value: "MT" },
+    { label: "Nebraska", value: "NE" },
+    { label: "Nevada", value: "NV" },
+    { label: "New Hampshire", value: "NH" },
+    { label: "New Jersey", value: "NJ" },
+    { label: "New Mexico", value: "NM" },
+    { label: "New York", value: "NY" },
+    { label: "North Carolina", value: "NC" },
+    { label: "North Dakota", value: "ND" },
+    { label: "Ohio", value: "OH" },
+    { label: "Oklahoma", value: "OK" },
+    { label: "Oregon", value: "OR" },
+    { label: "Pennsylvania", value: "PA" },
+    { label: "Rhode Island", value: "RI" },
+    { label: "South Carolina", value: "SC" },
+    { label: "South Dakota", value: "SD" },
+    { label: "Tennessee", value: "TN" },
+    { label: "Texas", value: "TX" },
+    { label: "Utah", value: "UT" },
+    { label: "Vermont", value: "VT" },
+    { label: "Virginia", value: "VA" },
+    { label: "Washington", value: "WA" },
+    { label: "West Virginia", value: "WV" },
+    { label: "Wisconsin", value: "WI" },
+    { label: "Wyoming", value: "WY" },
+  ];
+
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState<
+    "email" | "password" | "location" | null
+  >(null);
 
   const [location, setLocation] = useState({
     address: "",
@@ -32,8 +89,14 @@ export default function Settings() {
     state: "",
   });
 
+  const [modalError, setModalError] = useState(""); // error for email/password modal
+
   const [isSaving, setIsSaving] = useState(false);
   const [savedMessageVisible, setSavedMessageVisible] = useState(false);
+
+  const [tempEmail, setTempEmail] = useState(""); // For email modal
+  const [currentPassword, setCurrentPassword] = useState(""); // For both modals
+  const [newPassword, setNewPassword] = useState(""); // For password modal
 
   const handleImagePick = async () => {
     try {
@@ -46,7 +109,6 @@ export default function Settings() {
           return;
         }
 
-        // Upload to Cloudinary using your utility function
         const cloudinaryUrl = await uploadToCloudinary(asset.uri);
 
         if (cloudinaryUrl) {
@@ -61,7 +123,6 @@ export default function Settings() {
     }
   };
 
-  // ------------------ FETCH USER ------------------
   useEffect(() => {
     if (!userId) return;
 
@@ -87,7 +148,6 @@ export default function Settings() {
     fetchUser();
   }, [userId]);
 
-  // ------------------ GENERIC UPDATE ------------------
   const updateUser = async (updateData: any, closeModal = false) => {
     if (!userId) {
       alert("User not logged in");
@@ -125,18 +185,63 @@ export default function Settings() {
     }
   };
 
-  // ------------------ SAVE LOCATION ONLY ------------------
   const handleSaveLocation = () => updateUser({ location }, true);
 
-  // ------------------ SAVE ENTIRE USER ------------------
-  const handleSave = () =>
-    updateUser({
-      username,
-      email,
-      password,
-      profilePicUrl: profilePic,
-      location,
-    });
+  const handleSaveEmail = async () => {
+    if (!currentPassword) {
+      setModalError("Please enter your current password.");
+      return;
+    }
+
+    try {
+      const verifyRes = await axios.post(
+        "http://localhost:3001/api/users/verify-password",
+        { userId, password: currentPassword }
+      );
+
+      if (!verifyRes.data.success) {
+        setModalError("Incorrect current password. Email not updated.");
+        return;
+      }
+
+      // Only update if password is correct
+      await updateUser({ email: tempEmail });
+      setModalVisible(false);
+      setCurrentPassword("");
+      setModalError(""); // reset error
+    } catch (err) {
+      console.error(err);
+      setModalError("Failed to verify password. Email not updated.");
+    }
+  };
+
+  const handleSavePassword = async () => {
+    if (!currentPassword) {
+      setModalError("Please enter your current password.");
+      return;
+    }
+
+    try {
+      const verifyRes = await axios.post(
+        "http://localhost:3001/api/users/verify-password",
+        { userId, password: currentPassword }
+      );
+
+      if (!verifyRes.data.success) {
+        setModalError("Incorrect current password. Password not updated.");
+        return;
+      }
+
+      await updateUser({ password: newPassword });
+      setModalVisible(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setModalError(""); // reset error
+    } catch (err) {
+      console.error(err);
+      setModalError("Failed to verify password. Password not updated.");
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -153,6 +258,7 @@ export default function Settings() {
         />
       </TouchableOpacity>
 
+      {/* Username */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Username</Text>
         <TextInput
@@ -162,32 +268,45 @@ export default function Settings() {
         />
       </View>
 
+      {/* Email Button */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-        />
+        <TouchableOpacity
+          style={styles.inputButton}
+          onPress={() => {
+            setTempEmail(email);
+            setModalType("email");
+            setModalVisible(true);
+          }}
+        >
+          <Text style={styles.inputButtonText}>{email}</Text>
+        </TouchableOpacity>
       </View>
 
+      {/* Password Button */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <TouchableOpacity
+          style={styles.inputButton}
+          onPress={() => {
+            setModalType("password");
+            setModalVisible(true);
+          }}
+        >
+          <Text style={styles.inputButtonText}>••••••••</Text>
+        </TouchableOpacity>
       </View>
 
+      {/* Location */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Location</Text>
         <View style={styles.locContainer}>
           <TouchableOpacity
             style={styles.locationBtn}
-            onPress={() => setModalVisible(true)}
+            onPress={() => {
+              setModalType("location");
+              setModalVisible(true);
+            }}
           >
             <Text style={styles.locationText}>
               {location?.address || location?.city || location?.state
@@ -200,7 +319,13 @@ export default function Settings() {
 
       <TouchableOpacity
         style={styles.saveButton}
-        onPress={handleSave}
+        onPress={() =>
+          updateUser({
+            username,
+            profilePicUrl: profilePic,
+            location,
+          })
+        }
         disabled={isSaving}
       >
         {isSaving ? (
@@ -222,57 +347,151 @@ export default function Settings() {
         <Text style={styles.saveButtonText}>LOG OUT</Text>
       </TouchableOpacity>
 
-      {/* <TouchableOpacity
-        style={styles.contactBtn}
-        onPress={() => router.push({ pathname: "/contact-us" })}
-      >
-        <Text style={styles.saveButtonText}>CONTACT US</Text>
-      </TouchableOpacity> */}
-
+      {/* Modal */}
       <Modal
         visible={modalVisible}
-        transparent={true}
+        transparent
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.overlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Location</Text>
+            {modalType === "location" && (
+              <>
+                <Text style={styles.modalTitle}>Select Location</Text>
+                <Text style={styles.label}>Address</Text>
+                <TextInput
+                  style={styles.inputModal}
+                  value={location.address}
+                  onChangeText={(text) =>
+                    setLocation({ ...location, address: text })
+                  }
+                />
+                <Text style={styles.label}>City</Text>
+                <TextInput
+                  style={styles.inputModal}
+                  value={location.city}
+                  onChangeText={(text) =>
+                    setLocation({ ...location, city: text })
+                  }
+                />
+                <Text style={styles.label}>State</Text>
+                <Dropdown
+                  options={usStates}
+                  placeholder="Select a state"
+                  onSelect={(option) =>
+                    setLocation({ ...location, state: String(option.value) })
+                  }
+                />
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={styles.submitButton}
+                    onPress={handleSaveLocation}
+                    disabled={isSaving}
+                  >
+                    <Text style={styles.buttonText}>SUBMIT</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={styles.buttonText}>CANCEL</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
 
-            <Text style={styles.label}>Address</Text>
-            <TextInput
-              style={styles.inputModal}
-              value={location.address}
-              onChangeText={(text) =>
-                setLocation({ ...location, address: text })
-              }
-            />
-            <Text style={styles.label}>City</Text>
-            <TextInput
-              style={styles.inputModal}
-              value={location.city}
-              onChangeText={(text) => setLocation({ ...location, city: text })}
-            />
-            <Text style={styles.label}>State</Text>
-            <TextInput
-              style={styles.inputModal}
-              value={location.state}
-              onChangeText={(text) => setLocation({ ...location, state: text })}
-            />
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSaveLocation} // saves location to DB
-                disabled={isSaving}
-              >
-                <Text style={styles.buttonText}>SUBMIT</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>CANCEL</Text>
-              </TouchableOpacity>
-            </View>
+            {modalType === "email" && (
+              <>
+                <Text style={styles.modalTitle}>Change Email</Text>
+                <Text style={styles.label}>New Email</Text>
+                <TextInput
+                  style={styles.inputModal}
+                  value={tempEmail}
+                  onChangeText={setTempEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                <Text style={styles.label}>Current Password</Text>
+                <TextInput
+                  style={styles.inputModal}
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  secureTextEntry
+                />
+                {modalError !== "" && (
+                  <Text
+                    style={{
+                      color: "red",
+                      marginBottom: 10,
+                      textAlign: "center",
+                    }}
+                  >
+                    {modalError}
+                  </Text>
+                )}
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={styles.submitButton}
+                    onPress={handleSaveEmail}
+                    disabled={isSaving}
+                  >
+                    <Text style={styles.buttonText}>SUBMIT</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={styles.buttonText}>CANCEL</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            {modalType === "password" && (
+              <>
+                <Text style={styles.modalTitle}>Change Password</Text>
+                <Text style={styles.label}>New Password</Text>
+                <TextInput
+                  style={styles.inputModal}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  secureTextEntry
+                />
+                <Text style={styles.label}>Current Password</Text>
+                <TextInput
+                  style={styles.inputModal}
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  secureTextEntry
+                />
+                {modalError !== "" && (
+                  <Text
+                    style={{
+                      color: "red",
+                      marginBottom: 10,
+                      textAlign: "center",
+                    }}
+                  >
+                    {modalError}
+                  </Text>
+                )}
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={styles.submitButton}
+                    onPress={handleSavePassword}
+                    disabled={isSaving}
+                  >
+                    <Text style={styles.buttonText}>SUBMIT</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={styles.buttonText}>CANCEL</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -284,15 +503,10 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: "lightgreen",
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    padding: 20,
     alignItems: "center",
   },
-  title: {
-    fontSize: 40,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
+  title: { fontSize: 40, fontWeight: "bold", marginBottom: 20 },
   profilePic: {
     width: 200,
     height: 200,
@@ -301,21 +515,8 @@ const styles = StyleSheet.create({
     marginTop: 3,
     marginBottom: 20,
   },
-  changePicText: {
-    color: "#007AFF",
-    marginBottom: 20,
-    fontSize: 14,
-  },
-  inputGroup: {
-    width: "100%",
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 5,
-    textAlign: "left",
-  },
+  inputGroup: { width: "100%", marginBottom: 20 },
+  label: { fontSize: 16, fontWeight: "bold", marginBottom: 5 },
   biggerLabel: {
     fontSize: 22,
     fontWeight: "bold",
@@ -330,42 +531,32 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     fontSize: 14,
   },
+  inputButton: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+  },
+  inputButtonText: { fontSize: 14 },
   saveButton: {
     backgroundColor: "#388E3C",
     paddingVertical: 10,
-    paddingHorizontal: 20,
     borderRadius: 8,
     alignSelf: "stretch",
     alignItems: "center",
     marginBottom: 20,
-    marginTop: 5,
   },
   logOutBtn: {
     backgroundColor: "#D32F2F",
     paddingVertical: 10,
-    paddingHorizontal: 20,
     borderRadius: 8,
     alignSelf: "stretch",
     alignItems: "center",
     marginBottom: 20,
   },
-  contactBtn: {
-    backgroundColor: "#8595FF",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignSelf: "stretch",
-    alignItems: "center",
-  },
-  saveButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  locContainer: {
-    flexDirection: "column",
-    width: "100%",
-  },
+  saveButtonText: { color: "white", fontWeight: "bold", fontSize: 16 },
+  locContainer: { flexDirection: "column", width: "100%" },
   locationBtn: {
     padding: 10,
     backgroundColor: "#f9f9f9",
@@ -373,9 +564,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderWidth: 1,
   },
-  locationText: {
-    fontSize: 14,
-  },
+  locationText: { fontSize: 14 },
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -416,11 +605,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     alignItems: "center",
   },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
+  buttonText: { color: "white", fontWeight: "bold", fontSize: 16 },
   inputModal: {
     borderWidth: 1,
     borderColor: "#ccc",

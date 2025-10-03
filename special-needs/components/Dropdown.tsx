@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   selectorText: {
-    fontSize: 16,
+    fontSize: 14,
   },
   dropdownContainer: {
     marginTop: 5,

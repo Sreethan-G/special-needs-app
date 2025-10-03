@@ -38,7 +38,7 @@ export default function ImageSelector({ onImageSelected }: ImageSelectorProps) {
     if (!result.canceled && result.assets.length > 0) {
       const uri = result.assets[0].uri;
       Image.getSize(uri, (width, height) => {
-        const maxWidth = screenWidth - 40; // safe margin for layout
+        const maxWidth = screenWidth - 40;
         const scale = width > maxWidth ? maxWidth / width : 1;
         setImageSize({
           width: width * scale * 0.25,
@@ -58,9 +58,7 @@ export default function ImageSelector({ onImageSelected }: ImageSelectorProps) {
 
   const containerStyle = [
     styles.container,
-    imageSize
-      ? { height: imageSize.height + 20 } // 20 for padding
-      : { height: 40 }, // same as input
+    imageSize ? { height: imageSize.height + 20 } : { height: 40 },
   ];
 
   return (

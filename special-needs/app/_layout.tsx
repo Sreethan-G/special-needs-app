@@ -6,7 +6,7 @@ export default function RootLayout() {
     <AuthProvider>
       <Stack
         screenOptions={{
-          headerShown: false, // hides header on all screens
+          headerShown: false,
         }}
       ></Stack>
     </AuthProvider>

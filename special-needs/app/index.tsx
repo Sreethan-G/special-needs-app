@@ -8,7 +8,6 @@ export default function Index() {
   const navigation = useRouter();
 
   useEffect(() => {
-    // Mark as ready after mount
     setReady(true);
   }, []);
 
@@ -16,7 +15,7 @@ export default function Index() {
     if (!ready) return;
 
     if (userId) {
-      navigation.replace("/home"); // or router.replace("/home")
+      navigation.replace("/home");
     } else {
       navigation.replace("/login");
     }

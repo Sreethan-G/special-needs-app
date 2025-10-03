@@ -35,7 +35,7 @@ export default function ContactUs() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#D9F6D5", // light green background
+    backgroundColor: "#D9F6D5",
     flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",

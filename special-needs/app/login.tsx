@@ -57,7 +57,6 @@ export default function Login() {
         } else if (data.field === "password") {
           setPasswordError(data.error || "Invalid password");
         } else {
-          // fallback error
           setPasswordError(data.error || "Login failed.");
         }
         return;

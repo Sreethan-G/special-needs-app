@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Resource = require("../models/Resource");
 
-// ----------------- REGISTER -----------------
 router.post("/register", async (req, res) => {
   const { email, username, password, profilePicUrl } = req.body;
 
@@ -31,7 +30,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ----------------- LOGIN -----------------
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -46,7 +44,7 @@ router.post("/login", async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false, // true in production with HTTPS
+      secure: false,
       sameSite: "Strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -67,7 +65,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ----------------- GET CURRENT USER -----------------
 router.get("/me", (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ error: "Not logged in" });
@@ -80,7 +77,6 @@ router.get("/me", (req, res) => {
   }
 });
 
-// ----------------- FORGOT PASSWORD -----------------
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Email required" });
@@ -89,9 +85,14 @@ router.post("/forgot-password", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    user.resetCode = "123456"; // for testing
+    const resetCode = "123456"; // or generate randomly
+    const expires = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+
+    user.resetCode = resetCode;
+    user.resetCodeExpires = expires;
     await user.save();
-    console.log(`Reset code for ${email}: 123456`);
+
+    console.log(`Reset code for ${email}: ${resetCode}`);
 
     res.json({ message: "Reset code sent" });
   } catch (err) {
@@ -100,7 +101,27 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-// ----------------- RESET PASSWORD -----------------
+
+router.post("/verify-otp", async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) return res.status(400).json({ error: "Email and OTP required" });
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (user.resetCode !== otp) return res.status(400).json({ error: "Invalid OTP" });
+    if (user.resetCodeExpires && Date.now() > user.resetCodeExpires) 
+      return res.status(400).json({ error: "OTP expired" });
+
+    res.json({ message: "OTP verified" });
+  } catch (err) {
+    console.error("Verify OTP error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
 router.patch("/reset-password", async (req, res) => {
   const { email, otp, newPassword } = req.body;
   if (!email || !otp || !newPassword) return res.status(400).json({ error: "Email, OTP, and new password required" });
@@ -124,7 +145,6 @@ router.patch("/reset-password", async (req, res) => {
   }
 });
 
-// ----------------- GET USER -----------------
 router.get("/:userId", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
@@ -136,7 +156,6 @@ router.get("/:userId", async (req, res) => {
   }
 });
 
-// ----------------- UPDATE USER -----------------
 router.patch("/:userId", async (req, res) => {
   const { userId } = req.params;
   const { username, email, password, profilePicUrl, location } = req.body;
@@ -145,13 +164,11 @@ router.patch("/:userId", async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Dynamic field updates
     if (username) user.username = username;
     if (email) user.email = email;
     if (profilePicUrl) user.profilePicUrl = profilePicUrl;
     if (password) user.password = await bcrypt.hash(password, 10);
 
-    // Merge location updates
     if (location) {
       user.location = { ...user.location.toObject(), ...location };
       user.markModified("location");
@@ -165,7 +182,6 @@ router.patch("/:userId", async (req, res) => {
   }
 });
 
-// ----------------- FAVORITES -----------------
 router.get("/:userId/favorites", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).select("favorites");
@@ -204,5 +220,15 @@ router.patch("/:userId/favorites", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+// POST /api/users/verify-password
+router.post("/verify-password", async (req, res) => {
+  const { userId, password } = req.body;
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ success: false, error: "User not found" });
+
+  const match = await bcrypt.compare(password, user.password);
+  res.json({ success: match });
+});
+
 
 module.exports = router;

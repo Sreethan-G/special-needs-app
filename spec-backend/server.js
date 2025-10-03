@@ -13,13 +13,10 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
-// Use resource routes
 app.use("/api/resources", resourceRoutes);
 
-// Add user routes under /api/users
 app.use("/api/users", userRoutes);
 
-// Add review routes
 app.use("/api/reviews", reviewRoutes);
 
 mongoose.connect(process.env.MONGODB_URI, {

@@ -7,14 +7,14 @@ router.post("/", async (req, res) => {
     const { userId, rating, review, resourceId } = req.body;
 
     const newReview = new Review({
-      userId, // store userId reference
+      userId,
       rating,
       review,
       resourceId,
     });
 
     await newReview.save();
-    res.status(201).json(newReview); // return the saved review
+    res.status(201).json(newReview);
   } catch (error) {
     res.status(500).json({ error: "Error submitting review" });
   }
@@ -34,7 +34,7 @@ router.get("/:resourceId", async (req, res) => {
   try {
     const reviews = await Review.find({ resourceId: req.params.resourceId })
       .sort({ date: -1 })
-      .populate("userId", "username profilePicUrl"); // populate username and profilePicUrl fields from User
+      .populate("userId", "username profilePicUrl");
 
     res.json(reviews);
   } catch (err) {

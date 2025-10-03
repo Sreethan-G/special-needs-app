@@ -10,7 +10,7 @@ const locationSchema = new mongoose.Schema({
 
 const resourceSchema = new mongoose.Schema({
   name:     { type: String, required: true },
-  location: { type: locationSchema, default: () => ({}) }, // nested object with lat/lng
+  location: { type: locationSchema, default: () => ({}) },
   contact:  { type: String, default: "" },
   languages:{ type: String, default: "" },
   website:  { type: String, default: "" },

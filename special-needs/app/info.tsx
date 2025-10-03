@@ -56,7 +56,7 @@ export default function Info() {
 
   const formatDate = (isoDateString: string) => {
     const date = new Date(isoDateString);
-    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // months are 0-based
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const day = date.getDate().toString().padStart(2, "0");
     const year = date.getFullYear();
     return `${month}/${day}/${year}`;
@@ -69,7 +69,7 @@ export default function Info() {
           `http://localhost:3001/api/reviews/${resourceId}`
         );
         console.log("Reviews API response:", res.data);
-        setReviews(res.data); // expect res.data to be an array of review objects
+        setReviews(res.data);
       } catch (err) {
         console.error("Error fetching reviews:", err);
       }
@@ -95,13 +95,12 @@ export default function Info() {
       setReviewError("Please provide both a rating and review.");
       return;
     } else {
-      setReviewError(""); // Clear previous error if any
+      setReviewError("");
     }
 
     setIsSubmitting(true);
 
     try {
-      // Fetch user info
       const userRes = await axios.get(
         `http://localhost:3001/api/users/${userId}`
       );
@@ -117,7 +116,6 @@ export default function Info() {
         resourceId: resourceId,
       };
 
-      // Post review
       const response = await axios.post(
         "http://localhost:3001/api/reviews",
         reviewData
@@ -125,7 +123,6 @@ export default function Info() {
       console.log("POST response:", response);
 
       if (response.status === 201) {
-        // ✅ Fetch the updated reviews instead of appending
         const res = await axios.get(
           `http://localhost:3001/api/reviews/${resourceId}`
         );
@@ -299,12 +296,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: "bold",
-    width: 180, // fixed width for all labels so the values align
+    width: 180,
     marginRight: 20,
     fontSize: 21,
   },
   value: {
-    flex: 1, // take remaining space
+    flex: 1,
     flexWrap: "wrap",
     fontSize: 21,
   },

@@ -2,10 +2,10 @@ import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 
 type ReviewProps = {
-  profilePic: any; // require or uri
+  profilePic: any;
   username: string;
   date: string;
-  rating: number; // e.g., 4 (out of 5)
+  rating: number;
   review: string;
 };
 
