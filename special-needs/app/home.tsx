@@ -1,3 +1,4 @@
+import { SafeAreaView } from "react-native";
 import { useState } from "react";
 import {
   Text,
@@ -20,6 +21,10 @@ import { Resource } from "@/components/types/Resource";
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReviewType } from "@/components/types/ReviewType";
+import { Dimensions } from "react-native";
+
+const screenWidth = Dimensions.get("window").width;
+const isMobile = screenWidth < 600;
 
 export default function Index() {
   const router = useRouter();
@@ -346,252 +351,258 @@ export default function Index() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={true}
-      >
-        <Text style={styles.bigTitle}>Welcome to the Special Needs App!</Text>
-        <Text style={styles.title}>My Favorites</Text>
-        <View style={styles.cardPane}>
-          {favoriteIds.length === 0 ? (
-            <Text>No favorites yet.</Text>
-          ) : (
-            resources
-              .filter((resource) => favoriteIds.includes(resource._id))
-              .map((resource) => (
-                <Card
-                  key={resource._id}
-                  image={{
-                    uri: resource.image || "https://via.placeholder.com/200",
-                    width: 200,
-                    height: 200,
-                  }}
-                  title={resource.name}
-                  location={`${resource.location.address}, ${resource.location.city}, ${resource.location.state}`}
-                  contact={resource.contact}
-                  style={styles.card}
-                  isFavorite={true}
-                  onToggleFavorite={() => toggleFavorite(resource)}
-                  onPress={() =>
-                    handlePress(
-                      resource._id,
-                      resource.image || "",
-                      resource.name,
-                      resource.location,
-                      resource.contact,
-                      resource.type,
-                      resource.languages,
-                      resource.website,
-                      resource.notes
-                    )
-                  }
-                  averageRating={getAverageRating(resource._id)}
-                />
-              ))
-          )}
-        </View>
-
-        <Text style={styles.title}>Available Resources</Text>
-        <View style={styles.cardPane}>
-          {filteredResources.map((resource) => (
-            <Card
-              key={resource._id}
-              image={{
-                uri: resource.image || "https://via.placeholder.com/200",
-                width: 200,
-                height: 200,
-              }}
-              title={resource.name}
-              location={`${resource.location.address}, ${resource.location.city}, ${resource.location.state}`}
-              contact={resource.contact}
-              style={styles.card}
-              isFavorite={favoriteIds.includes(resource._id)}
-              onToggleFavorite={() => toggleFavorite(resource)}
-              onPress={() =>
-                handlePress(
-                  resource._id,
-                  resource.image || "",
-                  resource.name,
-                  resource.location,
-                  resource.contact,
-                  resource.type,
-                  resource.languages,
-                  resource.website,
-                  resource.notes
-                )
-              }
-              averageRating={getAverageRating(resource._id)}
-            />
-          ))}
-        </View>
-
-        <Dropdown
-          options={searchOptions}
-          placeholder="Search for a specific resource type"
-          onSelect={(option) => setSelectedType(String(option.value))}
-        />
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => setModalVisible(true)}
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={true}
+          nestedScrollEnabled
         >
-          <Text style={styles.buttonText}>ADD RESOURCE</Text>
-        </TouchableOpacity>
-
-        <Modal
-          visible={modalVisible}
-          transparent={true}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.overlay}>
-            <View style={styles.modalContent}>
-              <ScrollView
-                contentContainerStyle={styles.scrollContainer}
-                showsVerticalScrollIndicator={true}
-              >
-                <Text style={styles.modalTitle}>Add New Resource</Text>
-                <Text style={styles.modalText}>Name*</Text>
-                <TextInput
-                  style={[styles.input, errors.name && styles.inputError]}
-                  value={formData.name}
-                  onChangeText={(text) => handleChange("name", text)}
-                />
-                {errors.name && (
-                  <Text style={styles.errorText}>{errors.name}</Text>
-                )}
-                <Text style={styles.modalText}>Address*</Text>
-                <TextInput
-                  style={[styles.input, errors.address && styles.inputError]}
-                  value={formData.location.address}
-                  onChangeText={(text) =>
-                    handleChange("location", text, "address")
-                  }
-                />
-                {errors.address && (
-                  <Text style={styles.errorText}>{errors.address}</Text>
-                )}
-
-                <Text style={styles.modalText}>City*</Text>
-                <TextInput
-                  style={[styles.input, errors.city && styles.inputError]}
-                  value={formData.location.city}
-                  onChangeText={(text) =>
-                    handleChange("location", text, "city")
-                  }
-                />
-                {errors.city && (
-                  <Text style={styles.errorText}>{errors.city}</Text>
-                )}
-
-                <Text style={styles.modalText}>State*</Text>
-                <Dropdown
-                  options={usStates}
-                  placeholder="Select a state"
-                  onSelect={(option) =>
-                    handleChange("location", String(option.value), "state")
-                  }
-                />
-                {errors.state && (
-                  <Text style={styles.errorText}>{errors.state}</Text>
-                )}
-
-                <Text style={styles.modalText}>Contact*</Text>
-                <TextInput
-                  style={[styles.input, errors.contact && styles.inputError]}
-                  value={formData.contact}
-                  onChangeText={(text) => handleChange("contact", text)}
-                />
-                {errors.contact && (
-                  <Text style={styles.errorText}>{errors.contact}</Text>
-                )}
-                <Text style={styles.modalText}>Languages Supported</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.languages}
-                  onChangeText={(text) => handleChange("languages", text)}
-                />
-                <Text style={styles.modalText}>Website Link</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.website}
-                  onChangeText={(text) => handleChange("website", text)}
-                />
-                <Text style={styles.modalText}>Notes</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.notes}
-                  onChangeText={(text) => handleChange("notes", text)}
-                />
-                <Text style={styles.modalText}>Image*</Text>
-                <ImageSelector
-                  onImageSelected={(uri) => {
-                    console.log("Selected Image URI:", uri);
-                    setImageUri(uri);
-                    setFormData((prev) => {
-                      const newFormData = { ...prev, image: uri || "" };
-                      console.log("Updated formData with image:", newFormData);
-                      return newFormData;
-                    });
-                  }}
-                />
-
-                {errors.image && (
-                  <Text style={styles.errorText}>{errors.image}</Text>
-                )}
-                <Text style={styles.modalText}>Resource Type*</Text>
-                <Dropdown
-                  options={modalOptions}
-                  placeholder="—"
-                  onSelect={(option) =>
-                    handleChange("type", String(option.value))
-                  }
-                />
-                {errors.type && (
-                  <Text style={styles.errorText}>{errors.type}</Text>
-                )}
-
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.submitButton}
-                    onPress={handleSubmit}
-                  >
-                    <Text style={styles.buttonText}>SUBMIT</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => {
-                      setModalVisible(false);
-                      setErrors({});
+          <Text style={styles.bigTitle}>Welcome to SpecialSearch!</Text>
+          <Text style={styles.title}>My Favorites</Text>
+          <View style={styles.cardPane}>
+            {favoriteIds.length === 0 ? (
+              <Text>No favorites yet.</Text>
+            ) : (
+              resources
+                .filter((resource) => favoriteIds.includes(resource._id))
+                .map((resource) => (
+                  <Card
+                    key={resource._id}
+                    image={{
+                      uri: resource.image || "https://via.placeholder.com/200",
+                      width: 200,
+                      height: 200,
                     }}
-                  >
-                    <Text style={styles.buttonText}>CANCEL</Text>
-                  </TouchableOpacity>
-                </View>
-              </ScrollView>
-            </View>
+                    title={resource.name}
+                    location={`${resource.location.address}, ${resource.location.city}, ${resource.location.state}`}
+                    contact={resource.contact}
+                    style={styles.card}
+                    isFavorite={true}
+                    onToggleFavorite={() => toggleFavorite(resource)}
+                    onPress={() =>
+                      handlePress(
+                        resource._id,
+                        resource.image || "",
+                        resource.name,
+                        resource.location,
+                        resource.contact,
+                        resource.type,
+                        resource.languages,
+                        resource.website,
+                        resource.notes
+                      )
+                    }
+                    averageRating={getAverageRating(resource._id)}
+                  />
+                ))
+            )}
           </View>
-        </Modal>
-      </ScrollView>
-      <TouchableOpacity
-        onPress={() => router.push({ pathname: "/settings" })}
-        style={styles.gearIconButton}
-      >
-        <Image
-          source={require("@/assets/images/gear-icon.png")}
-          style={styles.gearIcon}
-        />
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => router.push({ pathname: "/contact-us" })}
-        style={styles.callIconButton}
-      >
-        <Image
-          source={require("@/assets/images/call-icon.png")}
-          style={styles.callIcon}
-        />
-      </TouchableOpacity>
-    </View>
+
+          <Text style={styles.title}>Available Resources</Text>
+          <View style={styles.cardPane}>
+            {filteredResources.map((resource) => (
+              <Card
+                key={resource._id}
+                image={{
+                  uri: resource.image || "https://via.placeholder.com/200",
+                  width: 200,
+                  height: 200,
+                }}
+                title={resource.name}
+                location={`${resource.location.address}, ${resource.location.city}, ${resource.location.state}`}
+                contact={resource.contact}
+                style={styles.card}
+                isFavorite={favoriteIds.includes(resource._id)}
+                onToggleFavorite={() => toggleFavorite(resource)}
+                onPress={() =>
+                  handlePress(
+                    resource._id,
+                    resource.image || "",
+                    resource.name,
+                    resource.location,
+                    resource.contact,
+                    resource.type,
+                    resource.languages,
+                    resource.website,
+                    resource.notes
+                  )
+                }
+                averageRating={getAverageRating(resource._id)}
+              />
+            ))}
+          </View>
+
+          <Dropdown
+            options={searchOptions}
+            placeholder="Search for a specific resource type"
+            onSelect={(option) => setSelectedType(String(option.value))}
+          />
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.buttonText}>ADD RESOURCE</Text>
+          </TouchableOpacity>
+
+          <Modal
+            visible={modalVisible}
+            transparent={true}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.overlay}>
+              <View style={styles.modalContent}>
+                <ScrollView
+                  contentContainerStyle={styles.scrollContainer}
+                  showsVerticalScrollIndicator={true}
+                >
+                  <Text style={styles.modalTitle}>Add New Resource</Text>
+                  <Text style={styles.modalText}>Name*</Text>
+                  <TextInput
+                    style={[styles.input, errors.name && styles.inputError]}
+                    value={formData.name}
+                    onChangeText={(text) => handleChange("name", text)}
+                  />
+                  {errors.name && (
+                    <Text style={styles.errorText}>{errors.name}</Text>
+                  )}
+                  <Text style={styles.modalText}>Address*</Text>
+                  <TextInput
+                    style={[styles.input, errors.address && styles.inputError]}
+                    value={formData.location.address}
+                    onChangeText={(text) =>
+                      handleChange("location", text, "address")
+                    }
+                  />
+                  {errors.address && (
+                    <Text style={styles.errorText}>{errors.address}</Text>
+                  )}
+
+                  <Text style={styles.modalText}>City*</Text>
+                  <TextInput
+                    style={[styles.input, errors.city && styles.inputError]}
+                    value={formData.location.city}
+                    onChangeText={(text) =>
+                      handleChange("location", text, "city")
+                    }
+                  />
+                  {errors.city && (
+                    <Text style={styles.errorText}>{errors.city}</Text>
+                  )}
+
+                  <Text style={styles.modalText}>State*</Text>
+                  <Dropdown
+                    options={usStates}
+                    placeholder="Select a state"
+                    onSelect={(option) =>
+                      handleChange("location", String(option.value), "state")
+                    }
+                  />
+                  {errors.state && (
+                    <Text style={styles.errorText}>{errors.state}</Text>
+                  )}
+
+                  <Text style={styles.modalText}>Contact*</Text>
+                  <TextInput
+                    style={[styles.input, errors.contact && styles.inputError]}
+                    value={formData.contact}
+                    onChangeText={(text) => handleChange("contact", text)}
+                  />
+                  {errors.contact && (
+                    <Text style={styles.errorText}>{errors.contact}</Text>
+                  )}
+                  <Text style={styles.modalText}>Languages Supported</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={formData.languages}
+                    onChangeText={(text) => handleChange("languages", text)}
+                  />
+                  <Text style={styles.modalText}>Website Link</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={formData.website}
+                    onChangeText={(text) => handleChange("website", text)}
+                  />
+                  <Text style={styles.modalText}>Notes</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={formData.notes}
+                    onChangeText={(text) => handleChange("notes", text)}
+                  />
+                  <Text style={styles.modalText}>Image*</Text>
+                  <ImageSelector
+                    onImageSelected={(uri) => {
+                      console.log("Selected Image URI:", uri);
+                      setImageUri(uri);
+                      setFormData((prev) => {
+                        const newFormData = { ...prev, image: uri || "" };
+                        console.log(
+                          "Updated formData with image:",
+                          newFormData
+                        );
+                        return newFormData;
+                      });
+                    }}
+                  />
+
+                  {errors.image && (
+                    <Text style={styles.errorText}>{errors.image}</Text>
+                  )}
+                  <Text style={styles.modalText}>Resource Type*</Text>
+                  <Dropdown
+                    options={modalOptions}
+                    placeholder="—"
+                    onSelect={(option) =>
+                      handleChange("type", String(option.value))
+                    }
+                  />
+                  {errors.type && (
+                    <Text style={styles.errorText}>{errors.type}</Text>
+                  )}
+
+                  <View style={styles.buttonRow}>
+                    <TouchableOpacity
+                      style={styles.submitButton}
+                      onPress={handleSubmit}
+                    >
+                      <Text style={styles.buttonText}>SUBMIT</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={() => {
+                        setModalVisible(false);
+                        setErrors({});
+                      }}
+                    >
+                      <Text style={styles.buttonText}>CANCEL</Text>
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
+        </ScrollView>
+        <TouchableOpacity
+          onPress={() => router.push({ pathname: "/settings" })}
+          style={styles.gearIconButton}
+        >
+          <Image
+            source={require("@/assets/images/gear-icon.png")}
+            style={styles.gearIcon}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push({ pathname: "/contact-us" })}
+          style={styles.callIconButton}
+        >
+          <Image
+            source={require("@/assets/images/call-icon.png")}
+            style={styles.callIcon}
+          />
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -650,6 +661,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
     borderRadius: 8,
+    width: screenWidth < 600 ? "99.5%" : "100%",
   },
   buttonRow: {
     marginTop: 10,

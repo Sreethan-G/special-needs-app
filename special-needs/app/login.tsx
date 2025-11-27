@@ -78,7 +78,7 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Special Needs App</Text>
+      <Text style={styles.title}>SpecialSearch</Text>
       <Text style={styles.subtitle}>
         An app to find special needs resources.
       </Text>

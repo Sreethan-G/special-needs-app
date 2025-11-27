@@ -1,4 +1,3 @@
-// AuthContext.tsx
 import React, {
   createContext,
   useContext,
@@ -6,11 +5,12 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+import { storage } from "./storage";
 
 interface AuthContextType {
   userId: string | null;
   setUserId: (id: string | null) => void;
-  logout: () => void; // add this
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,28 +18,38 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userId, setUserIdState] = useState<string | null>(null);
 
-  // Load from localStorage on app start
   useEffect(() => {
-    const storedId = localStorage.getItem("userId");
-    if (storedId) {
-      setUserIdState(storedId);
-    }
+    const loadUserId = async () => {
+      try {
+        const storedId = await storage.getItem("userId");
+        if (storedId) setUserIdState(storedId);
+      } catch (error) {
+        console.log("Error loading userId:", error);
+      }
+    };
+    loadUserId();
   }, []);
 
-  // Set and persist userId
-  const setUserId = (id: string | null) => {
-    if (id) {
-      localStorage.setItem("userId", id);
-    } else {
-      localStorage.removeItem("userId");
+  const setUserId = async (id: string | null) => {
+    try {
+      if (id) {
+        await storage.setItem("userId", id);
+      } else {
+        await storage.removeItem("userId");
+      }
+      setUserIdState(id);
+    } catch (error) {
+      console.log("Error setting userId:", error);
     }
-    setUserIdState(id);
   };
 
-  // Clear userId and localStorage on logout
-  const logout = () => {
-    localStorage.removeItem("userId");
-    setUserIdState(null);
+  const logout = async () => {
+    try {
+      await storage.removeItem("userId");
+      setUserIdState(null);
+    } catch (error) {
+      console.log("Error logging out:", error);
+    }
   };
 
   return (

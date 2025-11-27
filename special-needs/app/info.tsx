@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   View,
@@ -9,12 +9,17 @@ import {
   Modal,
   TextInput,
   ScrollView,
+  SafeAreaView,
 } from "react-native";
 import Review from "@/components/Review";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReviewType } from "@/components/types/ReviewType";
 import { Resource } from "@/components/types/Resource";
+import { Dimensions } from "react-native";
+
+const screenWidth = Dimensions.get("window").width;
+const isMobile = screenWidth < 600;
 
 export default function Info() {
   const {
@@ -153,141 +158,159 @@ export default function Info() {
   const [reviews, setReviews] = useState<ReviewType[]>([]);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.realTitle}>{title}</Text>
-      <View style={styles.infoContainer}>
-        <View style={styles.imageContainer}>
-          {image && (
-            <Image source={{ uri: image as string }} style={styles.image} />
-          )}
-        </View>
-        <View style={styles.textContainer}>
-          <View style={styles.row}>
-            <Text style={styles.label}>Resource Type</Text>
-            <Text style={styles.value}>{type}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Address</Text>
-            <Text style={styles.value}>
-              {locationObj.address || locationObj.city || locationObj.state
-                ? `${locationObj.address}, ${locationObj.city}, ${locationObj.state}`
-                : "No location provided"}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Contact</Text>
-            <Text style={styles.value}>{contact}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Languages</Text>
-            <Text style={styles.value}>{languages}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Website</Text>
-            <Text style={styles.value}>{website}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Notes</Text>
-            <Text style={styles.value}>{notes}</Text>
-          </View>
-        </View>
-      </View>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => setModalVisible(true)}
-      >
-        <Text style={styles.buttonText}>ADD REVIEW</Text>
-      </TouchableOpacity>
-      <Text style={styles.realTitle}>Reviews</Text>
-      <View style={styles.reviewsContainer}>
-        {reviews.map((r) => (
-          <Review
-            key={r._id}
-            profilePic={
-              r.userId?.profilePicUrl
-                ? { uri: r.userId.profilePicUrl }
-                : require("@/assets/images/adaptive-icon.png")
-            }
-            username={
-              r.userId?.profilePicUrl ? r.userId.username : "Unknown User"
-            }
-            date={formatDate(r.date)}
-            rating={r.rating}
-            review={r.review}
-          />
-        ))}
-      </View>
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.overlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add a Rating or Review</Text>
-
-            <View style={styles.starsView}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                  <Image
-                    source={
-                      rating >= star
-                        ? require("@/assets/images/star-fill.png")
-                        : require("@/assets/images/star-outline.png")
-                    }
-                    style={styles.star}
-                  />
-                </TouchableOpacity>
-              ))}
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.realTitle}>{title}</Text>
+          <View style={styles.infoContainer}>
+            <View style={styles.imageContainer}>
+              {image && (
+                <Image source={{ uri: image as string }} style={styles.image} />
+              )}
             </View>
-
-            <TextInput
-              placeholder="Write a review..."
-              style={[styles.input, reviewError ? styles.inputError : null]}
-              value={formData.review}
-              onChangeText={(text) => {
-                handleChange("review", text);
-                if (text && rating !== 0) setReviewError("");
-              }}
-            />
-            {reviewError !== "" && (
-              <Text style={styles.errorText}>{reviewError}</Text>
-            )}
-
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSubmit}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.buttonText}>
-                  {isSubmitting ? "Submitting..." : "SUBMIT"}
+            <View style={styles.textContainer}>
+              <View style={styles.row}>
+                <Text style={styles.label}>Resource Type</Text>
+                <Text style={styles.value}>{type}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Address</Text>
+                <Text style={styles.value}>
+                  {locationObj.address || locationObj.city || locationObj.state
+                    ? `${locationObj.address}, ${locationObj.city}, ${locationObj.state}`
+                    : "No location provided"}
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>CANCEL</Text>
-              </TouchableOpacity>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Contact</Text>
+                <Text style={styles.value}>{contact}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Languages</Text>
+                <Text style={styles.value}>{languages}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Website</Text>
+                <Text style={styles.value}>{website}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Notes</Text>
+                <Text style={styles.value}>{notes}</Text>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-    </ScrollView>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.buttonText}>ADD REVIEW</Text>
+          </TouchableOpacity>
+          <Text style={styles.realTitle}>Reviews</Text>
+          <View style={styles.reviewsContainer}>
+            {reviews.map((r) => (
+              <Review
+                key={r._id}
+                profilePic={
+                  r.userId?.profilePicUrl
+                    ? { uri: r.userId.profilePicUrl }
+                    : require("@/assets/images/adaptive-icon.png")
+                }
+                username={
+                  r.userId?.profilePicUrl ? r.userId.username : "Unknown User"
+                }
+                date={formatDate(r.date)}
+                rating={r.rating}
+                review={r.review}
+              />
+            ))}
+          </View>
+          <TouchableOpacity
+            style={styles.homeButton}
+            onPress={() => {
+              router.replace({ pathname: "/home" });
+            }}
+          >
+            <Text style={styles.buttonText}>RETURN TO HOME</Text>
+          </TouchableOpacity>
+          <Modal
+            visible={modalVisible}
+            transparent={true}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.overlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Add a Rating or Review</Text>
+
+                <View style={styles.starsView}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity
+                      key={star}
+                      onPress={() => setRating(star)}
+                    >
+                      <Image
+                        source={
+                          rating >= star
+                            ? require("@/assets/images/star-fill.png")
+                            : require("@/assets/images/star-outline.png")
+                        }
+                        style={styles.star}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <TextInput
+                  placeholder="Write a review..."
+                  style={[styles.input, reviewError ? styles.inputError : null]}
+                  value={formData.review}
+                  onChangeText={(text) => {
+                    handleChange("review", text);
+                    if (text && rating !== 0) setReviewError("");
+                  }}
+                />
+                {reviewError !== "" && (
+                  <Text style={styles.errorText}>{reviewError}</Text>
+                )}
+
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={styles.submitButton}
+                    onPress={handleSubmit}
+                    disabled={isSubmitting}
+                  >
+                    <Text style={styles.buttonText}>
+                      {isSubmitting ? "Submitting..." : "SUBMIT"}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={styles.buttonText}>CANCEL</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
+    flexGrow: 1,
   },
   infoContainer: {
-    flexDirection: "row",
     marginVertical: 10,
+    flexDirection: screenWidth < 600 ? "column" : "row",
   },
   imageContainer: {
     marginRight: 30,
+    alignItems: isMobile ? "center" : "flex-start",
+    justifyContent: isMobile ? "center" : "flex-start",
   },
   row: {
     flexDirection: "row",
@@ -355,7 +378,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "white",
-    width: "50%",
+    width: screenWidth < 600 ? "80%" : "50%",
     borderRadius: 15,
     padding: 20,
     elevation: 10,
@@ -409,5 +432,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 10,
     marginTop: -10,
+  },
+  homeButton: {
+    backgroundColor: "#6495ED",
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignSelf: "stretch",
+    alignItems: "center",
+    marginBottom: 20,
   },
 });

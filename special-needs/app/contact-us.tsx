@@ -7,6 +7,10 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
+import { Dimensions } from "react-native";
+
+const screenWidth = Dimensions.get("window").width;
+const isMobile = screenWidth < 600;
 
 export default function ContactUs() {
   return (
@@ -29,6 +33,14 @@ export default function ContactUs() {
           <Text style={styles.link}>amulsree@gmail.com</Text>
         </TouchableOpacity>
       </View>
+      <TouchableOpacity
+        style={styles.homeButton}
+        onPress={() => {
+          router.replace({ pathname: "/home" });
+        }}
+      >
+        <Text style={styles.buttonText}>RETURN TO HOME</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -59,7 +71,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     justifyContent: "center",
-    width: "50%",
+    width: screenWidth < 600 ? "80%" : "50%",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -75,5 +87,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#1B5E20",
     textDecorationLine: "underline",
+  },
+  homeButton: {
+    backgroundColor: "#6495ED",
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    marginVertical: 10,
+    width: screenWidth < 600 ? "80%" : "50%",
+  },
+  buttonText: {
+    color: "white",
+    textAlign: "center",
   },
 });

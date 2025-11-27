@@ -12,6 +12,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
+  SafeAreaView,
 } from "react-native";
 import { launchImageLibrary } from "react-native-image-picker";
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
@@ -244,258 +245,274 @@ export default function Settings() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Account Settings</Text>
-      <TouchableOpacity onPress={handleImagePick}>
-        <Text style={styles.biggerLabel}>Profile Picture</Text>
-        <Image
-          source={
-            profilePic
-              ? { uri: profilePic }
-              : require("@/assets/images/adaptive-icon.png")
-          }
-          style={styles.profilePic}
-        />
-      </TouchableOpacity>
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>Account Settings</Text>
+          <TouchableOpacity onPress={handleImagePick}>
+            <Text style={styles.biggerLabel}>Profile Picture</Text>
+            <Image
+              source={
+                profilePic
+                  ? { uri: profilePic }
+                  : require("@/assets/images/adaptive-icon.png")
+              }
+              style={styles.profilePic}
+            />
+          </TouchableOpacity>
 
-      {/* Username */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Username</Text>
-        <TextInput
-          style={styles.input}
-          value={username}
-          onChangeText={setUsername}
-        />
-      </View>
+          {/* Username */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Username</Text>
+            <TextInput
+              style={styles.input}
+              value={username}
+              onChangeText={setUsername}
+            />
+          </View>
 
-      {/* Email Button */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Email</Text>
-        <TouchableOpacity
-          style={styles.inputButton}
-          onPress={() => {
-            setTempEmail(email);
-            setModalType("email");
-            setModalVisible(true);
-          }}
-        >
-          <Text style={styles.inputButtonText}>{email}</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Email Button */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email</Text>
+            <TouchableOpacity
+              style={styles.inputButton}
+              onPress={() => {
+                setTempEmail(email);
+                setModalType("email");
+                setModalVisible(true);
+              }}
+            >
+              <Text style={styles.inputButtonText}>{email}</Text>
+            </TouchableOpacity>
+          </View>
 
-      {/* Password Button */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Password</Text>
-        <TouchableOpacity
-          style={styles.inputButton}
-          onPress={() => {
-            setModalType("password");
-            setModalVisible(true);
-          }}
-        >
-          <Text style={styles.inputButtonText}>••••••••</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Password Button */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password</Text>
+            <TouchableOpacity
+              style={styles.inputButton}
+              onPress={() => {
+                setModalType("password");
+                setModalVisible(true);
+              }}
+            >
+              <Text style={styles.inputButtonText}>••••••••</Text>
+            </TouchableOpacity>
+          </View>
 
-      {/* Location */}
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Location</Text>
-        <View style={styles.locContainer}>
+          {/* Location */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Location</Text>
+            <View style={styles.locContainer}>
+              <TouchableOpacity
+                style={styles.locationBtn}
+                onPress={() => {
+                  setModalType("location");
+                  setModalVisible(true);
+                }}
+              >
+                <Text style={styles.locationText}>
+                  {location?.address || location?.city || location?.state
+                    ? `${location.address}, ${location.city}, ${location.state}`
+                    : "Click to select location"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <TouchableOpacity
-            style={styles.locationBtn}
+            style={styles.saveButton}
+            onPress={() =>
+              updateUser({
+                username,
+                profilePicUrl: profilePic,
+                location,
+              })
+            }
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <ActivityIndicator color="white" />
+            ) : savedMessageVisible ? (
+              <Text style={styles.saveButtonText}>Changes saved!</Text>
+            ) : (
+              <Text style={styles.saveButtonText}>SAVE CHANGES</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.homeButton}
             onPress={() => {
-              setModalType("location");
-              setModalVisible(true);
+              router.replace({ pathname: "/home" });
             }}
           >
-            <Text style={styles.locationText}>
-              {location?.address || location?.city || location?.state
-                ? `${location.address}, ${location.city}, ${location.state}`
-                : "Click to select location"}
-            </Text>
+            <Text style={styles.saveButtonText}>RETURN TO HOME</Text>
           </TouchableOpacity>
-        </View>
+
+          <TouchableOpacity
+            style={styles.logOutBtn}
+            onPress={() => {
+              logout();
+              router.replace({ pathname: "/login" });
+            }}
+          >
+            <Text style={styles.saveButtonText}>LOG OUT</Text>
+          </TouchableOpacity>
+
+          {/* Modal */}
+          <Modal
+            visible={modalVisible}
+            transparent
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.overlay}>
+              <View style={styles.modalContent}>
+                {modalType === "location" && (
+                  <>
+                    <Text style={styles.modalTitle}>Select Location</Text>
+                    <Text style={styles.label}>Address</Text>
+                    <TextInput
+                      style={styles.inputModal}
+                      value={location.address}
+                      onChangeText={(text) =>
+                        setLocation({ ...location, address: text })
+                      }
+                    />
+                    <Text style={styles.label}>City</Text>
+                    <TextInput
+                      style={styles.inputModal}
+                      value={location.city}
+                      onChangeText={(text) =>
+                        setLocation({ ...location, city: text })
+                      }
+                    />
+                    <Text style={styles.label}>State</Text>
+                    <Dropdown
+                      options={usStates}
+                      placeholder="Select a state"
+                      onSelect={(option) =>
+                        setLocation({
+                          ...location,
+                          state: String(option.value),
+                        })
+                      }
+                    />
+                    <View style={styles.buttonRow}>
+                      <TouchableOpacity
+                        style={styles.submitButton}
+                        onPress={handleSaveLocation}
+                        disabled={isSaving}
+                      >
+                        <Text style={styles.buttonText}>SUBMIT</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.cancelButton}
+                        onPress={() => setModalVisible(false)}
+                      >
+                        <Text style={styles.buttonText}>CANCEL</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+
+                {modalType === "email" && (
+                  <>
+                    <Text style={styles.modalTitle}>Change Email</Text>
+                    <Text style={styles.label}>New Email</Text>
+                    <TextInput
+                      style={styles.inputModal}
+                      value={tempEmail}
+                      onChangeText={setTempEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                    <Text style={styles.label}>Current Password</Text>
+                    <TextInput
+                      style={styles.inputModal}
+                      value={currentPassword}
+                      onChangeText={setCurrentPassword}
+                      secureTextEntry
+                    />
+                    {modalError !== "" && (
+                      <Text
+                        style={{
+                          color: "red",
+                          marginBottom: 10,
+                          textAlign: "center",
+                        }}
+                      >
+                        {modalError}
+                      </Text>
+                    )}
+                    <View style={styles.buttonRow}>
+                      <TouchableOpacity
+                        style={styles.submitButton}
+                        onPress={handleSaveEmail}
+                        disabled={isSaving}
+                      >
+                        <Text style={styles.buttonText}>SUBMIT</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.cancelButton}
+                        onPress={() => setModalVisible(false)}
+                      >
+                        <Text style={styles.buttonText}>CANCEL</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+
+                {modalType === "password" && (
+                  <>
+                    <Text style={styles.modalTitle}>Change Password</Text>
+                    <Text style={styles.label}>New Password</Text>
+                    <TextInput
+                      style={styles.inputModal}
+                      value={newPassword}
+                      onChangeText={setNewPassword}
+                      secureTextEntry
+                    />
+                    <Text style={styles.label}>Current Password</Text>
+                    <TextInput
+                      style={styles.inputModal}
+                      value={currentPassword}
+                      onChangeText={setCurrentPassword}
+                      secureTextEntry
+                    />
+                    {modalError !== "" && (
+                      <Text
+                        style={{
+                          color: "red",
+                          marginBottom: 10,
+                          textAlign: "center",
+                        }}
+                      >
+                        {modalError}
+                      </Text>
+                    )}
+                    <View style={styles.buttonRow}>
+                      <TouchableOpacity
+                        style={styles.submitButton}
+                        onPress={handleSavePassword}
+                        disabled={isSaving}
+                      >
+                        <Text style={styles.buttonText}>SUBMIT</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.cancelButton}
+                        onPress={() => setModalVisible(false)}
+                      >
+                        <Text style={styles.buttonText}>CANCEL</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
+          </Modal>
+        </ScrollView>
       </View>
-
-      <TouchableOpacity
-        style={styles.saveButton}
-        onPress={() =>
-          updateUser({
-            username,
-            profilePicUrl: profilePic,
-            location,
-          })
-        }
-        disabled={isSaving}
-      >
-        {isSaving ? (
-          <ActivityIndicator color="white" />
-        ) : savedMessageVisible ? (
-          <Text style={styles.saveButtonText}>Changes saved!</Text>
-        ) : (
-          <Text style={styles.saveButtonText}>SAVE CHANGES</Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.logOutBtn}
-        onPress={() => {
-          logout();
-          router.replace({ pathname: "/login" });
-        }}
-      >
-        <Text style={styles.saveButtonText}>LOG OUT</Text>
-      </TouchableOpacity>
-
-      {/* Modal */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.overlay}>
-          <View style={styles.modalContent}>
-            {modalType === "location" && (
-              <>
-                <Text style={styles.modalTitle}>Select Location</Text>
-                <Text style={styles.label}>Address</Text>
-                <TextInput
-                  style={styles.inputModal}
-                  value={location.address}
-                  onChangeText={(text) =>
-                    setLocation({ ...location, address: text })
-                  }
-                />
-                <Text style={styles.label}>City</Text>
-                <TextInput
-                  style={styles.inputModal}
-                  value={location.city}
-                  onChangeText={(text) =>
-                    setLocation({ ...location, city: text })
-                  }
-                />
-                <Text style={styles.label}>State</Text>
-                <Dropdown
-                  options={usStates}
-                  placeholder="Select a state"
-                  onSelect={(option) =>
-                    setLocation({ ...location, state: String(option.value) })
-                  }
-                />
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.submitButton}
-                    onPress={handleSaveLocation}
-                    disabled={isSaving}
-                  >
-                    <Text style={styles.buttonText}>SUBMIT</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => setModalVisible(false)}
-                  >
-                    <Text style={styles.buttonText}>CANCEL</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-
-            {modalType === "email" && (
-              <>
-                <Text style={styles.modalTitle}>Change Email</Text>
-                <Text style={styles.label}>New Email</Text>
-                <TextInput
-                  style={styles.inputModal}
-                  value={tempEmail}
-                  onChangeText={setTempEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                <Text style={styles.label}>Current Password</Text>
-                <TextInput
-                  style={styles.inputModal}
-                  value={currentPassword}
-                  onChangeText={setCurrentPassword}
-                  secureTextEntry
-                />
-                {modalError !== "" && (
-                  <Text
-                    style={{
-                      color: "red",
-                      marginBottom: 10,
-                      textAlign: "center",
-                    }}
-                  >
-                    {modalError}
-                  </Text>
-                )}
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.submitButton}
-                    onPress={handleSaveEmail}
-                    disabled={isSaving}
-                  >
-                    <Text style={styles.buttonText}>SUBMIT</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => setModalVisible(false)}
-                  >
-                    <Text style={styles.buttonText}>CANCEL</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-
-            {modalType === "password" && (
-              <>
-                <Text style={styles.modalTitle}>Change Password</Text>
-                <Text style={styles.label}>New Password</Text>
-                <TextInput
-                  style={styles.inputModal}
-                  value={newPassword}
-                  onChangeText={setNewPassword}
-                  secureTextEntry
-                />
-                <Text style={styles.label}>Current Password</Text>
-                <TextInput
-                  style={styles.inputModal}
-                  value={currentPassword}
-                  onChangeText={setCurrentPassword}
-                  secureTextEntry
-                />
-                {modalError !== "" && (
-                  <Text
-                    style={{
-                      color: "red",
-                      marginBottom: 10,
-                      textAlign: "center",
-                    }}
-                  >
-                    {modalError}
-                  </Text>
-                )}
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.submitButton}
-                    onPress={handleSavePassword}
-                    disabled={isSaving}
-                  >
-                    <Text style={styles.buttonText}>SUBMIT</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => setModalVisible(false)}
-                  >
-                    <Text style={styles.buttonText}>CANCEL</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
-    </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -555,7 +572,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
-  saveButtonText: { color: "white", fontWeight: "bold", fontSize: 16 },
+  homeButton: {
+    backgroundColor: "#6495ED",
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignSelf: "stretch",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  saveButtonText: { color: "white", fontSize: 16 },
   locContainer: { flexDirection: "column", width: "100%" },
   locationBtn: {
     padding: 10,
@@ -605,7 +630,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     alignItems: "center",
   },
-  buttonText: { color: "white", fontWeight: "bold", fontSize: 16 },
+  buttonText: { color: "white", fontSize: 16 },
   inputModal: {
     borderWidth: 1,
     borderColor: "#ccc",
