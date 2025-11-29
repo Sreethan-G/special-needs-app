@@ -15,7 +15,7 @@
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.specialneeds"
+      "bundleIdentifier": "com.sreethan8809.specialneeds"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +23,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.specialneeds"
+      "package": "com.sreethan8809.specialneeds"
     },
     "web": {
       "bundler": "metro",

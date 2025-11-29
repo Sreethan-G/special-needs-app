@@ -8,6 +8,10 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
+import { Dimensions } from "react-native";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+
+const screenWidth = Dimensions.get("window").width;
 
 export default function CreateAccount() {
   const [email, setEmail] = useState("");
@@ -20,6 +24,8 @@ export default function CreateAccount() {
   const [emailError, setEmailError] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+
+  const auth = getAuth();
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -56,6 +62,16 @@ export default function CreateAccount() {
     setLoading(true);
 
     try {
+      // Step 1: Firebase account creation
+      const firebaseUser = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      if (!firebaseUser.user)
+        throw new Error("Firebase account creation failed.");
+
+      // Step 2: MongoDB account creation
       const response = await fetch("http://localhost:3001/api/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,6 +88,7 @@ export default function CreateAccount() {
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
       } else {
+        // Handle MongoDB errors
         if (data.error?.includes("Email"))
           setEmailError("Email already in use");
         else if (data.error?.includes("username"))
@@ -82,10 +99,22 @@ export default function CreateAccount() {
           setPasswordError(" ");
         }
       }
-    } catch (error: unknown) {
-      setEmailError(" ");
-      setUsernameError(" ");
-      setPasswordError(" ");
+    } catch (error: any) {
+      console.error("Create account error:", error);
+      // Handle Firebase errors
+      if (error.code && error.code.startsWith("auth/")) {
+        if (error.code === "auth/email-already-in-use")
+          setEmailError("Email already in use (Firebase)");
+        else if (error.code === "auth/invalid-email")
+          setEmailError("Invalid email (Firebase)");
+        else if (error.code === "auth/weak-password")
+          setPasswordError("Password too weak (Firebase)");
+        else setEmailError("Firebase error");
+      } else {
+        setEmailError(" ");
+        setUsernameError(" ");
+        setPasswordError(" ");
+      }
     } finally {
       setLoading(false);
     }
@@ -184,7 +213,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 15,
     paddingVertical: 12,
-    width: "65%",
+    width: screenWidth < 600 ? "80%" : "65%",
     marginBottom: 10,
     elevation: 2,
     fontSize: 16,
@@ -199,24 +228,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   primaryButton: {
-    width: "65%",
+    width: screenWidth < 600 ? "80%" : "65%",
     backgroundColor: "#66bb6a",
     padding: 10,
     borderRadius: 8,
     alignItems: "center",
-    marginVertical: 10,
+    marginVertical: 5,
   },
   secondaryBtn: {
-    width: "65%",
+    width: screenWidth < 600 ? "80%" : "65%",
     backgroundColor: "#388e3c",
     padding: 10,
     borderRadius: 8,
     alignItems: "center",
-    marginVertical: 10,
+    marginVertical: 5,
   },
   primaryButtonText: {
     color: "white",
-    fontWeight: "bold",
     fontSize: 18,
   },
 });

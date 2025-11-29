@@ -6,11 +6,10 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
-  Platform,
   ActivityIndicator,
 } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -21,10 +20,10 @@ export default function Login() {
 
   const { setUserId } = useAuth();
   const API_URL = "http://localhost:3001";
+  const auth = getAuth();
 
   const handleLogin = async () => {
     let hasError = false;
-
     setEmailError("");
     setPasswordError("");
 
@@ -32,17 +31,29 @@ export default function Login() {
       setEmailError("Email is required.");
       hasError = true;
     }
-
     if (!password) {
       setPasswordError("Password is required.");
       hasError = true;
     }
-
     if (hasError) return;
 
     setLoading(true);
 
     try {
+      // Step 1: Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const firebaseUser = userCredential.user;
+
+      if (!firebaseUser) {
+        setPasswordError("Firebase login failed.");
+        return;
+      }
+
+      // Step 2: MongoDB login
       const response = await fetch(`${API_URL}/api/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,25 +63,33 @@ export default function Login() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.field === "email") {
+        if (data.field === "email")
           setEmailError(data.error || "Invalid email");
-        } else if (data.field === "password") {
+        else if (data.field === "password")
           setPasswordError(data.error || "Invalid password");
-        } else {
-          setPasswordError(data.error || "Login failed.");
-        }
+        else setPasswordError(data.error || "Login failed.");
         return;
       }
 
       if (data.user && data.user._id) {
+        // Save MongoDB userId
         setUserId(data.user._id);
         router.push("/home");
       } else {
         setPasswordError("Login succeeded but user data is incomplete.");
       }
-    } catch (error) {
-      setPasswordError("Network error. Please try again.");
+    } catch (error: any) {
       console.error("Login error:", error);
+      if (error.code && error.code.startsWith("auth/")) {
+        // Firebase errors
+        if (error.code === "auth/user-not-found")
+          setEmailError("User not found in Firebase.");
+        else if (error.code === "auth/wrong-password")
+          setPasswordError("Incorrect password.");
+        else setPasswordError("Firebase login error.");
+      } else {
+        setPasswordError("Network error. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -208,7 +227,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "white",
-    fontWeight: "bold",
     fontSize: 18,
   },
   primaryButton: {
@@ -220,7 +238,6 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: "white",
-    fontWeight: "bold",
     fontSize: 18,
   },
   errorText: {

@@ -17,6 +17,13 @@ import {
 import { launchImageLibrary } from "react-native-image-picker";
 import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import Dropdown from "@/components/Dropdown";
+import {
+  getAuth,
+  updateEmail as firebaseUpdateEmail,
+  updatePassword as firebaseUpdatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+} from "firebase/auth";
 
 export default function Settings() {
   const [profilePic, setProfilePic] = useState<string | null>(null);
@@ -195,6 +202,7 @@ export default function Settings() {
     }
 
     try {
+      // First, verify with MongoDB
       const verifyRes = await axios.post(
         "http://localhost:3001/api/users/verify-password",
         { userId, password: currentPassword }
@@ -205,14 +213,29 @@ export default function Settings() {
         return;
       }
 
-      // Only update if password is correct
+      // Reauthenticate with Firebase
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user && user.email) {
+        const credential = EmailAuthProvider.credential(
+          user.email,
+          currentPassword
+        );
+        await reauthenticateWithCredential(user, credential);
+
+        await firebaseUpdateEmail(user, tempEmail);
+      }
+
+      // Update MongoDB as usual
       await updateUser({ email: tempEmail });
       setModalVisible(false);
       setCurrentPassword("");
-      setModalError(""); // reset error
-    } catch (err) {
+      setModalError("");
+    } catch (err: any) {
       console.error(err);
-      setModalError("Failed to verify password. Email not updated.");
+      setModalError(
+        err.message || "Failed to verify password. Email not updated."
+      );
     }
   };
 
@@ -223,6 +246,7 @@ export default function Settings() {
     }
 
     try {
+      // Verify MongoDB password
       const verifyRes = await axios.post(
         "http://localhost:3001/api/users/verify-password",
         { userId, password: currentPassword }
@@ -233,14 +257,30 @@ export default function Settings() {
         return;
       }
 
+      // Reauthenticate and update Firebase password
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user && user.email) {
+        const credential = EmailAuthProvider.credential(
+          user.email,
+          currentPassword
+        );
+        await reauthenticateWithCredential(user, credential);
+
+        await firebaseUpdatePassword(user, newPassword);
+      }
+
+      // Update MongoDB as usual
       await updateUser({ password: newPassword });
       setModalVisible(false);
       setCurrentPassword("");
       setNewPassword("");
-      setModalError(""); // reset error
-    } catch (err) {
+      setModalError("");
+    } catch (err: any) {
       console.error(err);
-      setModalError("Failed to verify password. Password not updated.");
+      setModalError(
+        err.message || "Failed to verify password. Password not updated."
+      );
     }
   };
 
@@ -630,7 +670,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     alignItems: "center",
   },
-  buttonText: { color: "white", fontSize: 16 },
+  buttonText: { color: "white", fontWeight: "bold", fontSize: 16 },
   inputModal: {
     borderWidth: 1,
     borderColor: "#ccc",

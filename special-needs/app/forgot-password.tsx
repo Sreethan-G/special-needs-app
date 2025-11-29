@@ -8,6 +8,9 @@ import {
   StyleSheet,
   Modal,
 } from "react-native";
+import { Dimensions } from "react-native";
+
+const screenWidth = Dimensions.get("window").width;
 
 export default function ForgotPassword() {
   const [emailAddress, setEmailAddress] = useState("");
@@ -239,7 +242,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 15,
     paddingVertical: 12,
-    width: "65%",
+    width: screenWidth < 600 ? "80%" : "65%",
     marginBottom: 15,
     fontSize: 16,
   },
@@ -252,7 +255,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    width: "60%",
+    width: screenWidth < 600 ? "80%" : "60%",
     backgroundColor: "white",
     padding: 20,
     borderRadius: 12,
@@ -295,11 +298,11 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     alignItems: "center",
   },
-  buttonText: { color: "white", fontWeight: "bold", fontSize: 16 },
+  buttonText: { color: "white", fontSize: 16 },
   buttonRowMain: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: "65%",
+    width: screenWidth < 600 ? "80%" : "65%",
     marginVertical: 5,
   },
   primaryButtonMain: {
@@ -318,6 +321,6 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     alignItems: "center",
   },
-  primaryButtonText: { color: "white", fontWeight: "bold", fontSize: 18 },
+  primaryButtonText: { color: "white", fontSize: screenWidth < 600 ? 16 : 18 },
   disabledButton: { backgroundColor: "#8bc34a" },
 });

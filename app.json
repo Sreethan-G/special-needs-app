@@ -1,5 +1,8 @@
 {
   "ios": {
-    "bundleIdentifier": "com.anonymous.special-needs-app"
+    "bundleIdentifier": "com.sreethan8809.special-needs-app"
+  },
+  "android": {
+    "package": "com.sreethan8809.specialneedsapp"
   }
 }

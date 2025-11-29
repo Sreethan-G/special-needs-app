@@ -22,12 +22,17 @@ import { uploadToCloudinary } from "@/utils/uploadToCloudinary";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReviewType } from "@/components/types/ReviewType";
 import { Dimensions } from "react-native";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 const screenWidth = Dimensions.get("window").width;
 const isMobile = screenWidth < 600;
 
 export default function Index() {
   const router = useRouter();
+  const auth = getAuth();
+
+  const { userId: mongoUserId, setUserId } = useAuth(); // MongoDB user ID
+  const [firebaseUser, setFirebaseUser] = useState<any>(null); // Firebase user
 
   const handlePress = (
     resourceId: string,
@@ -260,10 +265,33 @@ export default function Index() {
 
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
-  const { userId } = useAuth();
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setFirebaseUser(user);
+
+      if (user) {
+        // If logged in to Firebase, fetch or create MongoDB user
+        try {
+          const res = await axios.post(
+            "http://localhost:3001/api/users/fetchOrCreate",
+            {
+              firebaseUid: user.uid,
+              email: user.email,
+            }
+          );
+          setUserId(res.data.userId); // update MongoDB userId in AuthContext
+        } catch (err) {
+          console.error("Failed to sync Firebase user with MongoDB:", err);
+        }
+      } else {
+        setUserId(null); // no MongoDB user
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
-    console.log("Current userId:", userId);
     const fetchResources = async () => {
       try {
         const resourcesRes = await axios.get(
@@ -271,21 +299,21 @@ export default function Index() {
         );
         setResources(resourcesRes.data);
 
-        if (userId) {
+        if (mongoUserId) {
           const favoritesRes = await axios.get(
-            `http://localhost:3001/api/users/${userId}/favorites`
+            `http://localhost:3001/api/users/${mongoUserId}/favorites`
           );
           setFavoriteIds(favoritesRes.data);
         } else {
           setFavoriteIds([]);
         }
-      } catch (error) {
-        console.error("Failed to fetch resources or favorites:", error);
+      } catch (err) {
+        console.error("Failed to fetch resources or favorites:", err);
       }
     };
 
     fetchResources();
-  }, [userId]);
+  }, [mongoUserId]);
 
   const filteredResources =
     selectedType === "All"
@@ -293,31 +321,25 @@ export default function Index() {
       : resources.filter((r) => r.type === selectedType);
 
   const toggleFavorite = async (resource: Resource) => {
+    if (!mongoUserId) {
+      alert("Please log in to favorite resources.");
+      return;
+    }
+
     try {
-      if (!userId) {
-        alert("Please log in to favorite resources.");
-        return;
-      }
-
-      const url = `http://localhost:3001/api/users/${userId}/favorites`;
-      console.log("PATCH URL:", url);
-
       const response = await axios.patch(
-        `http://localhost:3001/api/users/${userId}/favorites`,
-        {
-          resourceId: resource._id,
-        }
+        `http://localhost:3001/api/users/${mongoUserId}/favorites`,
+        { resourceId: resource._id }
       );
 
       const isFavNew = response.data.isFav;
-
       setFavoriteIds((prev) =>
         isFavNew
           ? [resource._id, ...prev.filter((id) => id !== resource._id)]
           : prev.filter((id) => id !== resource._id)
       );
-    } catch (error) {
-      console.error("Failed to update favorite status:", error);
+    } catch (err) {
+      console.error("Failed to update favorite status:", err);
     }
   };
 
@@ -360,77 +382,90 @@ export default function Index() {
         >
           <Text style={styles.bigTitle}>Welcome to SpecialSearch!</Text>
           <Text style={styles.title}>My Favorites</Text>
-          <View style={styles.cardPane}>
-            {favoriteIds.length === 0 ? (
-              <Text>No favorites yet.</Text>
-            ) : (
-              resources
-                .filter((resource) => favoriteIds.includes(resource._id))
-                .map((resource) => (
-                  <Card
-                    key={resource._id}
-                    image={{
-                      uri: resource.image || "https://via.placeholder.com/200",
-                      width: 200,
-                      height: 200,
-                    }}
-                    title={resource.name}
-                    location={`${resource.location.address}, ${resource.location.city}, ${resource.location.state}`}
-                    contact={resource.contact}
-                    style={styles.card}
-                    isFavorite={true}
-                    onToggleFavorite={() => toggleFavorite(resource)}
-                    onPress={() =>
-                      handlePress(
-                        resource._id,
-                        resource.image || "",
-                        resource.name,
-                        resource.location,
-                        resource.contact,
-                        resource.type,
-                        resource.languages,
-                        resource.website,
-                        resource.notes
-                      )
-                    }
-                    averageRating={getAverageRating(resource._id)}
-                  />
-                ))
-            )}
+          <View style={{ marginVertical: 10 }}>
+            <ScrollView
+              horizontal={isMobile} // horizontal scrolling only on mobile
+              showsHorizontalScrollIndicator={isMobile}
+              contentContainerStyle={styles.cardPane}
+            >
+              {favoriteIds.length === 0 ? (
+                <Text>No favorites yet.</Text>
+              ) : (
+                resources
+                  .filter((resource) => favoriteIds.includes(resource._id))
+                  .map((resource) => (
+                    <Card
+                      key={resource._id}
+                      image={{
+                        uri:
+                          resource.image || "https://via.placeholder.com/200",
+                        width: 200,
+                        height: 200,
+                      }}
+                      title={resource.name}
+                      location={`${resource.location.address}, ${resource.location.city}, ${resource.location.state}`}
+                      contact={resource.contact}
+                      style={styles.card}
+                      isFavorite={true}
+                      onToggleFavorite={() => toggleFavorite(resource)}
+                      onPress={() =>
+                        handlePress(
+                          resource._id,
+                          resource.image || "",
+                          resource.name,
+                          resource.location,
+                          resource.contact,
+                          resource.type,
+                          resource.languages,
+                          resource.website,
+                          resource.notes
+                        )
+                      }
+                      averageRating={getAverageRating(resource._id)}
+                    />
+                  ))
+              )}
+            </ScrollView>
           </View>
 
           <Text style={styles.title}>Available Resources</Text>
-          <View style={styles.cardPane}>
-            {filteredResources.map((resource) => (
-              <Card
-                key={resource._id}
-                image={{
-                  uri: resource.image || "https://via.placeholder.com/200",
-                  width: 200,
-                  height: 200,
-                }}
-                title={resource.name}
-                location={`${resource.location.address}, ${resource.location.city}, ${resource.location.state}`}
-                contact={resource.contact}
-                style={styles.card}
-                isFavorite={favoriteIds.includes(resource._id)}
-                onToggleFavorite={() => toggleFavorite(resource)}
-                onPress={() =>
-                  handlePress(
-                    resource._id,
-                    resource.image || "",
-                    resource.name,
-                    resource.location,
-                    resource.contact,
-                    resource.type,
-                    resource.languages,
-                    resource.website,
-                    resource.notes
-                  )
-                }
-                averageRating={getAverageRating(resource._id)}
-              />
-            ))}
+          <View style={{ marginVertical: 10 }}>
+            <ScrollView
+              horizontal={isMobile} // horizontal scrolling only on mobile
+              showsHorizontalScrollIndicator={isMobile}
+              contentContainerStyle={styles.cardPane}
+            >
+              {filteredResources.map((resource) => (
+                <Card
+                  key={resource._id}
+                  image={{
+                    uri: resource.image || "https://via.placeholder.com/200",
+                    width: 200,
+                    height: 200,
+                  }}
+                  title={resource.name}
+                  location={`${resource.location.address}, ${resource.location.city}, ${resource.location.state}`}
+                  contact={resource.contact}
+                  style={styles.card}
+                  isFavorite={favoriteIds.includes(resource._id)}
+                  onToggleFavorite={() => toggleFavorite(resource)}
+                  onPress={() =>
+                    handlePress(
+                      resource._id,
+                      resource.image || "",
+                      resource.name,
+                      resource.location,
+                      resource.contact,
+                      resource.type,
+                      resource.languages,
+                      resource.website,
+                      resource.notes
+                    )
+                  }
+                  averageRating={getAverageRating(resource._id)}
+                />
+              ))}
+            </ScrollView>
           </View>
 
           <Dropdown
@@ -618,6 +653,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     flexDirection: "row",
     minHeight: 300,
+    justifyContent: "flex-start",
   },
   card: {
     marginRight: 20,

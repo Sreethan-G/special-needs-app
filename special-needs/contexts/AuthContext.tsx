@@ -6,18 +6,23 @@ import React, {
   ReactNode,
 } from "react";
 import { storage } from "./storage";
+import { getAuth, onAuthStateChanged, signOut, User } from "firebase/auth";
+import { auth } from "@/firebaseConfig";
 
 interface AuthContextType {
-  userId: string | null;
+  userId: string | null; // MongoDB userId
+  firebaseUser: User | null; // Firebase user object
   setUserId: (id: string | null) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userId, setUserIdState] = useState<string | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
 
+  // Load MongoDB userId from storage
   useEffect(() => {
     const loadUserId = async () => {
       try {
@@ -30,6 +35,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loadUserId();
   }, []);
 
+  // Listen for Firebase auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+    });
+    return unsubscribe;
+  }, [auth]);
+
+  // Set MongoDB userId in state and storage
   const setUserId = async (id: string | null) => {
     try {
       if (id) {
@@ -43,17 +57,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Logout from both Firebase and MongoDB
   const logout = async () => {
     try {
       await storage.removeItem("userId");
       setUserIdState(null);
+      if (firebaseUser) {
+        await signOut(auth);
+      }
+      setFirebaseUser(null);
     } catch (error) {
       console.log("Error logging out:", error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ userId, setUserId, logout }}>
+    <AuthContext.Provider value={{ userId, firebaseUser, setUserId, logout }}>
       {children}
     </AuthContext.Provider>
   );
