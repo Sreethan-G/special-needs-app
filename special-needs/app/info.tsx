@@ -57,7 +57,8 @@ export default function Info() {
     rating: 0,
   });
 
-  const { userId } = useAuth();
+  const { userId, firebaseUser } = useAuth();
+  const effectiveUserId = userId || firebaseUser?.uid;
 
   const formatDate = (isoDateString: string) => {
     const date = new Date(isoDateString);
@@ -91,7 +92,7 @@ export default function Info() {
   const [reviewError, setReviewError] = useState("");
 
   const handleSubmit = async () => {
-    if (!userId) {
+    if (!effectiveUserId) {
       alert("You must be logged in to submit a review.");
       return;
     }
@@ -107,14 +108,14 @@ export default function Info() {
 
     try {
       const userRes = await axios.get(
-        `http://localhost:3001/api/users/${userId}`
+        `http://localhost:3001/api/users/${effectiveUserId}`
       );
       if (!userRes.data) throw new Error("User not found");
 
       const { username, profilePicUrl } = userRes.data;
 
       const reviewData = {
-        userId: userId,
+        userId: effectiveUserId,
         date: new Date().toISOString(),
         rating: rating,
         review: formData.review,
