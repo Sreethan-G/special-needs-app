@@ -11,6 +11,8 @@ router.get("/", async (req, res) => {
   }
 });
 
+//add filtering functionality with another get route
+
 router.post("/", async (req, res) => {
   try {
     const newResource = new Resource(req.body);
