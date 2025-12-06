@@ -26,6 +26,7 @@ const uriToBlob = async (uri: string): Promise<Blob> => {
 };
 
 export const uploadToCloudinary = async (imageUri: string): Promise<string | null> => {
+
   if (!imageUri) {
     console.error("No image URI provided for upload.");
     return null;
@@ -56,11 +57,14 @@ export const uploadToCloudinary = async (imageUri: string): Promise<string | nul
     } as any);
   }
 
-  formData.append("upload_preset", "unsigned_upload"); // your unsigned preset name
+  const CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const UPLOAD_PRESET = process.env.EXPO_PUBLIC_CLOUDINARY_PRESET || "";
+
+  formData.append("upload_preset", UPLOAD_PRESET); // your unsigned preset name
 
   try {
     const response = await fetch(
-      "https://api.cloudinary.com/v1_1/dcjay5oja/image/upload",
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
       {
         method: "POST",
         body: formData,

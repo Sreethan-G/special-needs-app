@@ -19,7 +19,7 @@ export default function Login() {
   const [passwordError, setPasswordError] = useState("");
 
   const { setUserId } = useAuth();
-  const API_URL = "http://localhost:3001";
+  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const auth = getAuth();
 
   const handleLogin = async () => {
