@@ -1,56 +1,73 @@
-require('dotenv').config();
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 const resourceRoutes = require("./routes/resources");
 const userRoutes = require("./routes/users");
 const reviewRoutes = require("./routes/reviews");
 
 const app = express();
-app.use(cors());
+
+/* ✅ Ensure upload directory exists */
+const uploadDir = path.join(__dirname, "public/uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+/* ✅ Middleware */
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 
+/* ✅ API routes */
 app.use("/api/resources", resourceRoutes);
-
 app.use("/api/users", userRoutes);
-
 app.use("/api/reviews", reviewRoutes);
 
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+/* ✅ MongoDB */
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-app.listen(3001, "0.0.0.0", () => {
-  console.log("Server is running on port 3001");
-});
-
-const multer = require("multer");
-const path = require("path");
-
+/* ✅ Multer config */
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/uploads");
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
+  filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 const upload = multer({ storage });
 
-app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+/* ✅ Static uploads */
+app.use("/uploads", express.static(uploadDir));
 
+/* ✅ Upload endpoint */
 app.post("/api/upload", upload.single("image"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
 
-  const imageUrl = `http://localhost:3001/uploads/${req.file.filename}`;
-
+  const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
   res.json({ url: imageUrl });
+});
+
+/* ✅ Server start (MUST BE LAST) */
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
 });
