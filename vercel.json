@@ -1,28 +1,14 @@
 {
-  "version": 2,
   "builds": [
     {
       "src": "special-needs/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "installCommand": "npm install --legacy-peer-deps",
-        "buildCommand": "npm run vercel-build",
         "distDir": "special-needs/dist"
       }
     }
   ],
   "routes": [
-    {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/(.*\\..+)",
-      "dest": "/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+    { "src": "/(.*)", "dest": "/special-needs/dist/$1" }
   ]
 }
