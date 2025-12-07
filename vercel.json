@@ -7,14 +7,14 @@
       "config": {
         "installCommand": "npm install --legacy-peer-deps",
         "buildCommand": "expo export --platform web",
-        "distDir": "special-needs/dist"
+        "distDir": "dist"
       }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/special-needs/dist/$1"
+      "dest": "/$1"
     }
   ]
 }
