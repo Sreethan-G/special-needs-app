@@ -13,12 +13,12 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "/special-needs/dist/$1"
+      "src": "/(.*\\..+)", 
+      "dest": "/$1" 
     },
     {
-      "src": "/",
-      "dest": "/special-needs/dist/index.html"
+      "src": "/(.*)", 
+      "dest": "/index.html" 
     }
   ]
 }
