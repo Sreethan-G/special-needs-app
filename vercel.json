@@ -7,22 +7,12 @@
       "config": {
         "installCommand": "npm install --legacy-peer-deps",
         "buildCommand": "npm run vercel-build",
-        "distDir": "/dist"
+        "distDir": "dist"
       }
     }
   ],
   "routes": [
-    {
-      "src": "/_next/(.*)",
-      "dest": "/_next/$1"
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
