@@ -2,19 +2,19 @@
   "version": 2,
   "builds": [
     {
-      "src": "special-needs/package.json",
+      "src": "special-needs/**/*",
       "use": "@vercel/static-build",
       "config": {
-        "installCommand": "npm install",
-        "buildCommand": "cd special-needs && expo export:web --output web-build",
-        "distDir": "special-needs/web-build"
+        "installCommand": "npm install --legacy-peer-deps",
+        "buildCommand": "cd special-needs && expo export --platform web",
+        "distDir": "special-needs/dist"
       }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/special-needs/web-build/$1"
+      "dest": "/special-needs/dist/$1"
     }
   ]
 }
