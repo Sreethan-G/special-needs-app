@@ -20,9 +20,24 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+const allowedOrigins = [
+  "https://special-needs-app.vercel.app",
+  "https://special-needs-app-git-main.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:19006",
+];
+
 /* ✅ Middleware */
 app.use(cors({
-  origin: true,
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // mobile apps / Postman
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());
