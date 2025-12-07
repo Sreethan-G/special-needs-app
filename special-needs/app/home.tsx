@@ -270,19 +270,7 @@ export default function Index() {
       setFirebaseUser(user);
 
       if (user) {
-        // If logged in to Firebase, fetch or create MongoDB user
-        try {
-          const res = await axios.post(
-            "http://localhost:3001/api/users/fetchOrCreate",
-            {
-              firebaseUid: user.uid,
-              email: user.email,
-            }
-          );
-          setUserId(res.data.userId); // update MongoDB userId in AuthContext
-        } catch (err) {
-          console.error("Failed to sync Firebase user with MongoDB:", err);
-        }
+        console.log("Firebase user detected:", user.email);
       } else {
         setUserId(null); // no MongoDB user
       }

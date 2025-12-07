@@ -61,9 +61,11 @@ export default function CreateAccount() {
 
     setLoading(true);
 
+    let firebaseUser: any = null;
+
     try {
       // Step 1: Firebase account creation
-      const firebaseUser = await createUserWithEmailAndPassword(
+      firebaseUser = await createUserWithEmailAndPassword(
         auth,
         email,
         password
@@ -80,15 +82,10 @@ export default function CreateAccount() {
 
       const data = await response.json();
 
-      if (response.ok) {
-        setEmail("");
-        setUsername("");
-        setPassword("");
-        setProfilePicUrl("");
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 2000);
-      } else {
-        // Handle MongoDB errors
+      if (!response.ok) {
+        // Rollback Firebase if MongoDB fails
+        if (firebaseUser.user) await firebaseUser.user.delete();
+
         if (data.error?.includes("Email"))
           setEmailError("Email already in use");
         else if (data.error?.includes("username"))
@@ -98,9 +95,19 @@ export default function CreateAccount() {
           setUsernameError(" ");
           setPasswordError(" ");
         }
+        return;
       }
+
+      // Success
+      setEmail("");
+      setUsername("");
+      setPassword("");
+      setProfilePicUrl("");
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2000);
     } catch (error: any) {
       console.error("Create account error:", error);
+
       // Handle Firebase errors
       if (error.code && error.code.startsWith("auth/")) {
         if (error.code === "auth/email-already-in-use")
@@ -115,6 +122,9 @@ export default function CreateAccount() {
         setUsernameError(" ");
         setPasswordError(" ");
       }
+
+      // Rollback Firebase if partially created
+      if (firebaseUser?.user) await firebaseUser.user.delete();
     } finally {
       setLoading(false);
     }

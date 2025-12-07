@@ -5,6 +5,27 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Resource = require("../models/Resource");
 
+// ------------------- SYNC PASSWORD -------------------
+router.patch("/sync-password", async (req, res) => {
+  const { email, newPassword } = req.body;
+  if (!email || !newPassword)
+    return res.status(400).json({ error: "Email and new password required" });
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ message: "MongoDB password updated successfully" });
+  } catch (error) {
+    console.error("Sync password error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ------------------- REGISTER -------------------
 router.post("/register", async (req, res) => {
   const { email, username, password, profilePicUrl } = req.body;
 
@@ -30,6 +51,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// ------------------- LOGIN -------------------
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -65,6 +87,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// ------------------- GET CURRENT USER -------------------
 router.get("/me", (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ error: "Not logged in" });
@@ -77,74 +100,7 @@ router.get("/me", (req, res) => {
   }
 });
 
-router.post("/forgot-password", async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: "Email required" });
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    const resetCode = "123456"; // or generate randomly
-    const expires = Date.now() + 10 * 60 * 1000; // 10 minutes from now
-
-    user.resetCode = resetCode;
-    user.resetCodeExpires = expires;
-    await user.save();
-
-    console.log(`Reset code for ${email}: ${resetCode}`);
-
-    res.json({ message: "Reset code sent" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-
-router.post("/verify-otp", async (req, res) => {
-  const { email, otp } = req.body;
-  if (!email || !otp) return res.status(400).json({ error: "Email and OTP required" });
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    if (user.resetCode !== otp) return res.status(400).json({ error: "Invalid OTP" });
-    if (user.resetCodeExpires && Date.now() > user.resetCodeExpires) 
-      return res.status(400).json({ error: "OTP expired" });
-
-    res.json({ message: "OTP verified" });
-  } catch (err) {
-    console.error("Verify OTP error:", err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-
-router.patch("/reset-password", async (req, res) => {
-  const { email, otp, newPassword } = req.body;
-  if (!email || !otp || !newPassword) return res.status(400).json({ error: "Email, OTP, and new password required" });
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    if (!user.resetCode || user.resetCode !== otp) return res.status(400).json({ error: "Invalid OTP" });
-    if (Date.now() > user.resetCodeExpires) return res.status(400).json({ error: "OTP expired" });
-
-    user.password = await bcrypt.hash(newPassword, 10);
-    user.resetCode = undefined;
-    user.resetCodeExpires = undefined;
-    await user.save();
-
-    res.json({ message: "Password reset successful" });
-  } catch (error) {
-    console.error("Reset password error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
+// ------------------- GET USER BY ID -------------------
 router.get("/:userId", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
@@ -156,6 +112,7 @@ router.get("/:userId", async (req, res) => {
   }
 });
 
+// ------------------- UPDATE USER -------------------
 router.patch("/:userId", async (req, res) => {
   const { userId } = req.params;
   const { username, email, password, profilePicUrl, location } = req.body;
@@ -182,6 +139,7 @@ router.patch("/:userId", async (req, res) => {
   }
 });
 
+// ------------------- FAVORITES -------------------
 router.get("/:userId/favorites", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).select("favorites");
@@ -220,7 +178,8 @@ router.patch("/:userId/favorites", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-// POST /api/users/verify-password
+
+// ------------------- VERIFY PASSWORD -------------------
 router.post("/verify-password", async (req, res) => {
   const { userId, password } = req.body;
   const user = await User.findById(userId);

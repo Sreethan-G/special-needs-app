@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -40,56 +40,44 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // Step 1: Firebase Authentication
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const firebaseUser = userCredential.user;
+      // 1️⃣ Login via Firebase first
+      const auth = getAuth();
+      await signInWithEmailAndPassword(auth, email, password);
 
-      if (!firebaseUser) {
-        setPasswordError("Firebase login failed.");
-        return;
+      // 2️⃣ Sync password to MongoDB AFTER Firebase confirms login
+      const syncRes = await fetch(`${API_URL}/api/users/sync-password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, newPassword: password }),
+      });
+
+      if (!syncRes.ok) {
+        console.error("Sync password failed:", await syncRes.text());
       }
 
-      // Step 2: MongoDB login
-      const response = await fetch(`${API_URL}/api/users/login`, {
+      // 3️⃣ Login via MongoDB to get user object
+      const res = await fetch(`${API_URL}/api/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok) {
-        if (data.field === "email")
-          setEmailError(data.error || "Invalid email");
-        else if (data.field === "password")
-          setPasswordError(data.error || "Invalid password");
-        else setPasswordError(data.error || "Login failed.");
+      if (!res.ok) {
+        if (data.field === "email") setEmailError(data.error);
+        else if (data.field === "password") setPasswordError(data.error);
+        else setPasswordError(data.error);
+        setLoading(false);
         return;
       }
 
-      if (data.user && data.user._id) {
-        // Save MongoDB userId
-        setUserId(data.user._id);
-        router.push("/home");
-      } else {
-        setPasswordError("Login succeeded but user data is incomplete.");
-      }
+      // 4️⃣ Update context & navigate
+      setUserId(data.user._id);
+      router.push("/home");
     } catch (error: any) {
       console.error("Login error:", error);
-      if (error.code && error.code.startsWith("auth/")) {
-        // Firebase errors
-        if (error.code === "auth/user-not-found")
-          setEmailError("User not found in Firebase.");
-        else if (error.code === "auth/wrong-password")
-          setPasswordError("Incorrect password.");
-        else setPasswordError("Firebase login error.");
-      } else {
-        setPasswordError("Network error. Please try again.");
-      }
+      setPasswordError("Invalid email or password");
     } finally {
       setLoading(false);
     }
