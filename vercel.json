@@ -2,11 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "special-needs/package.json",
+      "src": "special-needs/**/*",
       "use": "@vercel/static-build",
       "config": {
         "installCommand": "npm install --legacy-peer-deps",
-        "buildCommand": "expo build:web",
+        "buildCommand": "cd special-needs && expo build:web",
         "distDir": "special-needs/web-build"
       }
     }
