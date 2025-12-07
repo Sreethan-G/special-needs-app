@@ -7,7 +7,7 @@
       "config": {
         "installCommand": "npm install --legacy-peer-deps",
         "buildCommand": "npm run vercel-build",
-        "distDir": "special-needs/dist"
+        "distDir": "/dist"
       }
     }
   ],
