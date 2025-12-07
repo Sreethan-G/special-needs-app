@@ -6,7 +6,7 @@
       "use": "@vercel/static-build",
       "config": {
         "installCommand": "npm install --legacy-peer-deps",
-        "buildCommand": "cd special-needs && expo export --platform web",
+        "buildCommand": "expo export --platform web",
         "distDir": "special-needs/dist"
       }
     }
