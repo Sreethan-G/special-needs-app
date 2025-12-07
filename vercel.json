@@ -13,11 +13,12 @@
   ],
   "routes": [
     {
-      "handle": "filesystem"
+      "src": "/(.*)",
+      "dest": "/special-needs/dist/$1"
     },
     {
-      "src": "/.*",
-      "dest": "/index.html"
+      "src": "/",
+      "dest": "/special-needs/dist/index.html"
     }
   ]
 }
