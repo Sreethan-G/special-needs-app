@@ -15,8 +15,7 @@
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sreethan8809.specialneeds",
-      "icon": "./assets/images/specialsearchlogo.jpg"
+      "bundleIdentifier": "com.sreethan8809.specialneeds"
     },
     "android": {
       "adaptiveIcon": {
