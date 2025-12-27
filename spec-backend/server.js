@@ -20,21 +20,17 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const allowedOrigins = [
-  "https://special-needs-app.vercel.app",
-  "https://special-needs-app-git-main.vercel.app",
-  "http://localhost:3000",
-  "http://localhost:19006",
-  "https://special-needs-pihy0nb4v-sreethan8809-3489s-projects.vercel.app",
-  
-];
-
 /* ✅ Middleware */
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true); // mobile apps / Postman
 
-    if (allowedOrigins.includes(origin)) {
+    // Allow production + all Vercel preview URLs
+    if (
+      origin === "https://special-needs-app.vercel.app" || 
+      origin === "https://special-needs-app-git-main.vercel.app" || 
+      origin.startsWith("https://special-needs-")
+    ) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
@@ -42,6 +38,7 @@ app.use(cors({
   },
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
