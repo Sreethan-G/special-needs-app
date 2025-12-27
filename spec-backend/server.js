@@ -25,6 +25,8 @@ const allowedOrigins = [
   "https://special-needs-app-git-main.vercel.app",
   "http://localhost:3000",
   "http://localhost:19006",
+  "https://special-needs-pihy0nb4v-sreethan8809-3489s-projects.vercel.app",
+  
 ];
 
 /* ✅ Middleware */
