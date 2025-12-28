@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { api } from "@/utils/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -19,7 +20,6 @@ export default function Login() {
   const [passwordError, setPasswordError] = useState("");
 
   const { setUserId } = useAuth();
-  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const auth = getAuth();
 
   const handleLogin = async () => {
@@ -45,7 +45,7 @@ export default function Login() {
       await signInWithEmailAndPassword(auth, email, password);
 
       // 2️⃣ Sync password to MongoDB AFTER Firebase confirms login
-      const syncRes = await fetch(`${API_URL}/api/users/sync-password`, {
+      const syncRes = await fetch(api("api/users/sync-password"), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, newPassword: password }),
@@ -56,7 +56,7 @@ export default function Login() {
       }
 
       // 3️⃣ Login via MongoDB to get user object
-      const res = await fetch(`${API_URL}/api/users/login`, {
+      const res = await fetch(api("api/users/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
