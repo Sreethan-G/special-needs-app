@@ -56,7 +56,7 @@ export default function ForgotPassword() {
       await sendPasswordResetEmail(auth, emailAddress);
 
       setSuccessMessage(
-        "Password reset email sent! Check your inbox and follow the instructions."
+        "Password reset email sent! Check your inbox and follow the instructions. If it's not there, check your spam folder."
       );
       setEmailAddress("");
     } catch (error: any) {
