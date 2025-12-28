@@ -189,5 +189,23 @@ router.post("/verify-password", async (req, res) => {
   res.json({ success: match });
 });
 
+// ------------------- CHECK EMAIL --------------------
+// ------------------- CHECK EMAIL EXISTS -------------------
+router.post("/check-email", async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    res.json({ exists: !!user });
+  } catch (error) {
+    console.error("Check email error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
 
 module.exports = router;
