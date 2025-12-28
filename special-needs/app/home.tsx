@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ReviewType } from "@/components/types/ReviewType";
 import { Dimensions } from "react-native";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { api } from "@/utils/api";
 
 const screenWidth = Dimensions.get("window").width;
 const isMobile = screenWidth < 600;
@@ -211,7 +212,7 @@ export default function Index() {
         image: uploadedImageUrl,
       };
 
-      await axios.post("http://localhost:3001/api/resources", finalFormData);
+      await axios.post(api("/api/resources"), finalFormData);
       setModalVisible(false);
       setFormData({
         name: "",
@@ -282,14 +283,12 @@ export default function Index() {
   useEffect(() => {
     const fetchResources = async () => {
       try {
-        const resourcesRes = await axios.get(
-          "http://localhost:3001/api/resources"
-        );
+        const resourcesRes = await axios.get(api("/api/resources"));
         setResources(resourcesRes.data);
 
         if (mongoUserId) {
           const favoritesRes = await axios.get(
-            `http://localhost:3001/api/users/${mongoUserId}/favorites`
+            api(`/api/users/${mongoUserId}/favorites`)
           );
           setFavoriteIds(favoritesRes.data);
         } else {
@@ -316,7 +315,7 @@ export default function Index() {
 
     try {
       const response = await axios.patch(
-        `http://localhost:3001/api/users/${mongoUserId}/favorites`,
+        api(`/api/users/${mongoUserId}/favorites`),
         { resourceId: resource._id }
       );
 
@@ -336,7 +335,7 @@ export default function Index() {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/api/reviews");
+        const res = await axios.get(api("/api/reviews"));
         setReviews(res.data);
       } catch (error) {
         console.error("Failed to fetch reviews:", error);

@@ -11,6 +11,7 @@ import { Dimensions } from "react-native";
 import axios from "axios";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebaseConfig";
+import { api } from "@/utils/api";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -42,10 +43,9 @@ export default function ForgotPassword() {
     setLoading(true);
     try {
       // First, check if the email exists in MongoDB
-      const response = await axios.post(
-        "http://localhost:3001/api/users/check-email",
-        { email: emailAddress }
-      );
+      const response = await axios.post(api("/api/users/check-email"), {
+        email: emailAddress,
+      });
 
       if (!response.data.exists) {
         setEmailError("This email does not exist in our system.");

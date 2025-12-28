@@ -24,6 +24,7 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
 } from "firebase/auth";
+import { api } from "@/utils/api";
 
 export default function Settings() {
   const [profilePic, setProfilePic] = useState<string | null>(null);
@@ -136,9 +137,7 @@ export default function Settings() {
 
     const fetchUser = async () => {
       try {
-        const { data: user } = await axios.get(
-          `http://localhost:3001/api/users/${userId}`
-        );
+        const { data: user } = await axios.get(api(`/api/users/${userId}`));
 
         setUsername(user.username || "");
         setEmail(user.email || "");
@@ -165,7 +164,7 @@ export default function Settings() {
     setIsSaving(true);
     try {
       const { data } = await axios.patch(
-        `http://localhost:3001/api/users/${userId}`,
+        api(`/api/users/${userId}`),
         updateData
       );
       const updatedUser = data.user;
@@ -203,10 +202,10 @@ export default function Settings() {
 
     try {
       // First, verify with MongoDB
-      const verifyRes = await axios.post(
-        "http://localhost:3001/api/users/verify-password",
-        { userId, password: currentPassword }
-      );
+      const verifyRes = await axios.post(api("/api/users/verify-password"), {
+        userId,
+        password: currentPassword,
+      });
 
       if (!verifyRes.data.success) {
         setModalError("Incorrect current password. Email not updated.");
@@ -247,10 +246,10 @@ export default function Settings() {
 
     try {
       // Verify MongoDB password
-      const verifyRes = await axios.post(
-        "http://localhost:3001/api/users/verify-password",
-        { userId, password: currentPassword }
-      );
+      const verifyRes = await axios.post(api("/api/users/verify-password"), {
+        userId,
+        password: currentPassword,
+      });
 
       if (!verifyRes.data.success) {
         setModalError("Incorrect current password. Password not updated.");

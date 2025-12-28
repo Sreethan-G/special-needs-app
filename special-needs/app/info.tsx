@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ReviewType } from "@/components/types/ReviewType";
 import { Resource } from "@/components/types/Resource";
 import { Dimensions } from "react-native";
+import { api } from "@/utils/api";
 
 const screenWidth = Dimensions.get("window").width;
 const isMobile = screenWidth < 600;
@@ -71,9 +72,7 @@ export default function Info() {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:3001/api/reviews/${resourceId}`
-        );
+        const res = await axios.get(api(`/api/reviews/${resourceId}`));
         console.log("Reviews API response:", res.data);
         setReviews(res.data);
       } catch (err) {
@@ -107,9 +106,7 @@ export default function Info() {
     setIsSubmitting(true);
 
     try {
-      const userRes = await axios.get(
-        `http://localhost:3001/api/users/${effectiveUserId}`
-      );
+      const userRes = await axios.get(api(`/api/users/${effectiveUserId}`));
       if (!userRes.data) throw new Error("User not found");
 
       const { username, profilePicUrl } = userRes.data;
@@ -122,16 +119,11 @@ export default function Info() {
         resourceId: resourceId,
       };
 
-      const response = await axios.post(
-        "http://localhost:3001/api/reviews",
-        reviewData
-      );
+      const response = await axios.post(api("/api/reviews"), reviewData);
       console.log("POST response:", response);
 
       if (response.status === 201) {
-        const res = await axios.get(
-          `http://localhost:3001/api/reviews/${resourceId}`
-        );
+        const res = await axios.get(api(`/api/reviews/${resourceId}`));
         setReviews(res.data);
 
         setModalVisible(false);

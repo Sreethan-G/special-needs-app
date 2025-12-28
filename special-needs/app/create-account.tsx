@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Dimensions } from "react-native";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { api } from "@/utils/api";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -74,7 +75,7 @@ export default function CreateAccount() {
         throw new Error("Firebase account creation failed.");
 
       // Step 2: MongoDB account creation
-      const response = await fetch("http://localhost:3001/api/users/register", {
+      const response = await fetch(api("api/users/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, username, password, profilePicUrl }),
