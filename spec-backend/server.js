@@ -1,3 +1,5 @@
+const isProd = process.env.NODE_ENV === "production";
+
 require("dotenv").config();
 
 const express = require("express");
@@ -23,21 +25,36 @@ if (!fs.existsSync(uploadDir)) {
 /* ✅ Middleware */
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // mobile apps / Postman
+    // Allow mobile apps, Postman, curl
+    if (!origin) return callback(null, true);
 
-    // Allow production + all Vercel preview URLs
-    if (
-      origin === "https://special-needs-app.vercel.app" || 
-      origin === "https://special-needs-app-git-main.vercel.app" || 
-      origin.startsWith("https://special-needs-")
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
+    // ✅ Production (Render)
+    if (isProd) {
+      if (
+        origin === "https://special-needs-app.vercel.app" ||
+        origin === "https://special-needs-app-git-main.vercel.app" ||
+        origin.startsWith("https://special-needs-")
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
     }
+
+    // ✅ Development (localhost, Expo, LAN)
+    if (
+      origin.startsWith("http://localhost") ||
+      origin.startsWith("http://127.0.0.1") ||
+      origin.startsWith("http://192.168.") ||
+      origin.startsWith("http://10.0.")
+    ) {
+      return callback(null, true);
+    }
+
+    callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
 }));
+
 
 app.use(express.json());
 app.use(cookieParser());
