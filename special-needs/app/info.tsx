@@ -200,23 +200,39 @@ export default function Info() {
           </TouchableOpacity>
           <Text style={styles.realTitle}>Reviews</Text>
           <View style={styles.reviewsContainer}>
-            {reviews.map((r) => (
-              <Review
-                key={r._id}
-                profilePic={
-                  r.userId?.profilePicUrl
-                    ? { uri: r.userId.profilePicUrl }
-                    : require("@/assets/images/adaptive-icon.png")
-                }
-                username={
-                  r.userId?.profilePicUrl ? r.userId.username : "Unknown User"
-                }
-                date={formatDate(r.date)}
-                rating={r.rating}
-                review={r.review}
-              />
-            ))}
+            {reviews.length === 0 ? (
+              <View style={{ minHeight: 120, justifyContent: "flex-start" }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: "black",
+                    textAlign: "left",
+                    paddingTop: 10,
+                  }}
+                >
+                  No reviews yet.
+                </Text>
+              </View>
+            ) : (
+              reviews.map((r) => (
+                <Review
+                  key={r._id}
+                  profilePic={
+                    r.userId?.profilePicUrl
+                      ? { uri: r.userId.profilePicUrl }
+                      : require("@/assets/images/adaptive-icon.png")
+                  }
+                  username={
+                    r.userId?.profilePicUrl ? r.userId.username : "Unknown User"
+                  }
+                  date={formatDate(r.date)}
+                  rating={r.rating}
+                  review={r.review}
+                />
+              ))
+            )}
           </View>
+
           <TouchableOpacity
             style={styles.homeButton}
             onPress={() => {
