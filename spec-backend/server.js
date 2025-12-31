@@ -29,7 +29,6 @@ app.use(cors({
     if (
       origin === "https://special-needs-app.vercel.app" || 
       origin === "https://special-needs-app-git-main.vercel.app" || 
-      origin === "http://localhost:8081" ||
       origin.startsWith("https://special-needs-")
     ) {
       callback(null, true);
