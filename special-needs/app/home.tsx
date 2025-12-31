@@ -106,13 +106,15 @@ export default function Index() {
       label: "Comprehensive Therapy Centers",
       value: "Comprehensive Therapy Center",
     },
+    { label: "Day Treatment", value: "Day Treatment" },
     { label: "Family Support Services", value: "Family Support Service" },
     { label: "Medical Centers", value: "Medical Center" },
     { label: "Occupational Therapy", value: "Occupational Therapy" },
+    { label: "Physical Therapy", value: "Physical Therapy" },
     { label: "Parent Support Groups", value: "Parent Support Group" },
-    { label: "Sensory Therapy", value: "Sensory Therapy" },
-    { label: "Special Education Schools", value: "Special Education School" },
-    { label: "Miscellaneous", value: "Miscellaneous" },
+    { label: "Speech Therapy", value: "Speech Therapy" },
+    { label: "Special Education", value: "Special Education" },
+    { label: "Other", value: "Other" },
   ];
 
   const usStates = [
