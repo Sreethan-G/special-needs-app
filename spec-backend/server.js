@@ -13,6 +13,7 @@ const fs = require("fs");
 const resourceRoutes = require("./routes/resources");
 const userRoutes = require("./routes/users");
 const reviewRoutes = require("./routes/reviews");
+const contactRoutes = require("./routes/contact");
 
 const app = express();
 
@@ -67,6 +68,7 @@ app.get("/health", (req, res) => {
 app.use("/api/resources", resourceRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/contact", contactRoutes);
 
 /* ✅ MongoDB */
 mongoose

@@ -1,3 +1,4 @@
+import ContactForm from "@/components/ContactForm";
 import { router } from "expo-router";
 import {
   View,
@@ -8,6 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Dimensions } from "react-native";
+import { api } from "@/utils/api";
 
 const screenWidth = Dimensions.get("window").width;
 const isMobile = screenWidth < 600;
@@ -20,19 +22,8 @@ export default function ContactUs() {
         We’re here to help with any questions or concerns.
       </Text>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Email:</Text>
-        <TouchableOpacity
-          onPress={() => Linking.openURL("mailto:sreethan8809@gmail.com")}
-        >
-          <Text style={styles.link}>sreethan8809@gmail.com</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => Linking.openURL("mailto:amulsree@gmail.com")}
-        >
-          <Text style={styles.link}>amulsree@gmail.com</Text>
-        </TouchableOpacity>
-      </View>
+      <ContactForm apiUrl={api("/api/contact")} />
+
       <TouchableOpacity
         style={styles.homeButton}
         onPress={() => {
