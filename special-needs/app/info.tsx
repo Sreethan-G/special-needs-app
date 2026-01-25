@@ -222,9 +222,7 @@ export default function Info() {
                       ? { uri: r.userId.profilePicUrl }
                       : require("@/assets/images/adaptive-icon.png")
                   }
-                  username={
-                    r.userId?.profilePicUrl ? r.userId.username : "Unknown User"
-                  }
+                  username={r.userId?.username || "Unknown User"}
                   date={formatDate(r.date)}
                   rating={r.rating}
                   review={r.review}
