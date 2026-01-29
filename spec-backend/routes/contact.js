@@ -20,9 +20,9 @@ router.post("/", async (req, res) => {
 
   try {
     // Send email using Resend
-    await resend.emails.send({
+    const response = await resend.emails.send({
       from: "Special Needs App <onboarding@resend.dev>", // replace Nodemailer 'from'
-      to: ["sreethan8809@gmail.com", "amulsree@gmail.com"], // recipients
+      to: ["sreethan8809@gmail.com"], // recipients
       reply_to: email, // user email
       subject: `New Contact Form Submission from ${name}`,
       html: `
